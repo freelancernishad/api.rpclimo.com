@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AllowedOriginController;
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\Api\Admin\Users\UserController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\Vehicle\VehicleController;
 use App\Http\Controllers\Api\Admin\Package\AdminPackageController;
 use App\Http\Controllers\Api\Notifications\NotificationController;
 use App\Http\Controllers\Api\SystemSettings\SystemSettingController;
@@ -149,6 +150,31 @@ Route::prefix('admin')->group(function () {
 
         // Create a notification for a user (admin only)
         Route::post('/notifications/create-for-user', [NotificationController::class, 'createForUser']);
+
+
+
+
+        // Vehicle Routes
+        Route::prefix('/vehicles')->group(function () {
+            // Get all vehicles
+            Route::get('/', [VehicleController::class, 'index']);
+
+            // Create a new vehicle
+            Route::post('/', [VehicleController::class, 'store']);
+
+            // Get a specific vehicle
+            Route::get('/{vehicle}', [VehicleController::class, 'show']);
+
+            // Update a specific vehicle
+            Route::put('/{vehicle}', [VehicleController::class, 'update']);
+            Route::patch('/{vehicle}', [VehicleController::class, 'update']);
+
+            // Delete a specific vehicle
+            Route::delete('/{vehicle}', [VehicleController::class, 'destroy']);
+
+            // Upload images for a specific vehicle
+            Route::post('/{vehicle}/upload-images', [VehicleController::class, 'uploadImages']);
+        });
 
 
 
