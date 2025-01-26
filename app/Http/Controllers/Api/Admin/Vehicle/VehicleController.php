@@ -112,4 +112,42 @@ class VehicleController extends Controller
         return response()->json(['message' => 'Images uploaded successfully'], 200);
     }
 
+
+
+
+
+
+        /**
+     * Update pricing details for a specific vehicle.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePricing(Request $request, $id)
+    {
+        // Find the vehicle by ID
+        $vehicle = Vehicle::findOrFail($id);
+
+        // Validate the request data
+        $validated = $request->validate([
+            'hourly_rate' => 'nullable|numeric',
+            'minimum_hour' => 'nullable|integer',
+            'base_fare_price' => 'nullable|numeric',
+            'rate_per_mile' => 'nullable|numeric',
+            'rate_per_minute' => 'nullable|numeric',
+            'surcharge_percentage' => 'nullable|numeric',
+            'waiting_charge_per_min' => 'nullable|numeric',
+        ]);
+
+        // Update the vehicle's pricing details
+        $vehicle->update($validated);
+
+        // Return the updated vehicle
+        return response()->json([
+            'message' => 'Pricing details updated successfully',
+            'data' => $vehicle,
+        ]);
+    }
+
 }

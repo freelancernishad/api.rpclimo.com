@@ -23,6 +23,16 @@ class Vehicle extends Model
         'length',
         'transmission',
         'extra_features',
+
+
+        'hourly_rate',
+        'minimum_hour',
+        'base_fare_price', // Updated field name
+        'rate_per_mile',
+        'rate_per_minute',
+        'surcharge_percentage',
+        'waiting_charge_per_min', // Only for Round Trip
+        
     ];
 
     protected $casts = [
