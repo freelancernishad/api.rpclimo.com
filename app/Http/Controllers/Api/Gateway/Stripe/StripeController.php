@@ -62,21 +62,21 @@ class StripeController extends Controller
     {
         // Set your Stripe webhook secret
         $endpointSecret = config('STRIPE_WEBHOOK_SECRET');
-
+    
         // Get the payload and signature header
         $payload = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-
+    
         try {
             // Verify the webhook signature
             $event = Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
-
+    
             // Handle the event
             switch ($event->type) {
                 case 'checkout.session.completed':
                     // Handle successful checkout session (one-time or subscription)
                     $session = $event->data->object;
-
+    
                     // Find the payment record (only for one-time payments)
                     if ($session->mode === 'payment') {
                         $payment = Payment::where('session_id', $session->id)->first();
@@ -87,9 +87,10 @@ class StripeController extends Controller
                                 'paid_at' => now(),
                                 'response_data' => json_encode($event),
                             ]);
-
-                            // If this is a package purchase, create or update the UserPackage
+    
+                            // Handle the payable type for Package
                             if ($payment->payable_type === 'App\\Models\\Package') {
+                                // Existing logic for Package
                                 $userPackage = UserPackage::updateOrCreate(
                                     ['id' => $payment->user_package_id], // Use the user_package_id if it exists
                                     [
@@ -103,36 +104,50 @@ class StripeController extends Controller
                                         'status' => 'active',
                                     ]
                                 );
-
+    
                                 // Update the payment with the UserPackage ID
                                 $payment->update(['user_package_id' => $userPackage->id]);
-
+    
                                 // Save PaymentMethod details
                                 $this->savePaymentMethodDetails($userPackage, $session->customer);
+                            }
+    
+                            // Handle the payable type for Booking
+                            if ($payment->payable_type === 'App\\Models\\Booking') {
+                                // Handle the Booking case
+                                $booking = Booking::where('id', $payment->payable_id)->first();
+                                if ($booking) {
+                                    // Perform any updates or actions specific to the booking
+                                    $booking->update([
+                                        'payment_status' => 'confirmed', // Update payment status to completed
+                                        'amount_paid' => $session->amount_total / 100, // Convert from cents to dollars
+                                        'confirmed_at' => now(), // Set confirmed_at timestamp
+                                    ]);
+                                }
                             }
                         }
                     }
                     break;
-
+    
                 case 'invoice.payment_succeeded':
                     // Handle successful subscription payment
                     $invoice = $event->data->object;
-
+    
                     // Find the UserPackage by Stripe subscription ID
                     $userPackage = UserPackage::where('stripe_subscription_id', $invoice->subscription)->first();
-
+    
                     // If UserPackage does not exist, create it
                     if (!$userPackage) {
                         // Retrieve the Stripe subscription to get details
                         $stripeSubscription = \Stripe\Subscription::retrieve($invoice->subscription);
-
+    
                         // Retrieve the package ID from the subscription metadata or other source
                         $packageId = $stripeSubscription->metadata->package_id ?? null; // Adjust based on your metadata
-
+    
                         // Retrieve the user ID from the Stripe customer
                         $stripeCustomer = \Stripe\Customer::retrieve($stripeSubscription->customer);
                         $user = User::where('stripe_customer_id', $stripeCustomer->id)->first();
-
+    
                         if ($user && $packageId) {
                             // Create a new UserPackage
                             $userPackage = UserPackage::create([
@@ -150,10 +165,10 @@ class StripeController extends Controller
                             return response()->json(['error' => 'User or package not found'], 400);
                         }
                     }
-
+    
                     // Save PaymentMethod details
                     $this->savePaymentMethodDetails($userPackage, $invoice->customer);
-
+    
                     // Create a new payment record for the successful charge
                     $payment = Payment::create([
                         'user_id' => $userPackage->user_id,
@@ -161,7 +176,7 @@ class StripeController extends Controller
                         'amount' => $invoice->amount_paid / 100, // Convert from cents to dollars
                         'currency' => $invoice->currency,
                         'status' => 'completed',
-            
+    
                         'paid_at' => now(),
                         'payable_type' => 'App\\Models\\Package',
                         'payable_id' => $userPackage->package_id,
@@ -170,23 +185,23 @@ class StripeController extends Controller
                         'is_recurring' => true,
                         'response_data' => json_encode($event),
                     ]);
-
+    
                     // Update the next billing date
                     $userPackage->update([
                         'next_billing_at' => Carbon::createFromTimestamp($invoice->lines->data[0]->period->end),
                     ]);
-
+    
                     // Update UserPackageAddons with the payment ID
                     UserPackageAddon::where('user_id', $userPackage->user_id)
                         ->where('package_id', $userPackage->package_id)
                         ->update(['purchase_id' => $payment->id]);
-
+    
                     break;
-
+    
                 case 'invoice.payment_failed':
                     // Handle failed subscription payment
                     $invoice = $event->data->object;
-
+    
                     // Find the UserPackage by Stripe subscription ID
                     $userPackage = UserPackage::where('stripe_subscription_id', $invoice->subscription)->first();
                     if ($userPackage) {
@@ -197,23 +212,23 @@ class StripeController extends Controller
                             'amount' => $invoice->amount_due / 100, // Convert from cents to dollars
                             'currency' => $invoice->currency,
                             'status' => 'failed',
-
+    
                             'payable_type' => 'App\\Models\\Package',
                             'payable_id' => $userPackage->package_id,
                             'business_name' => $userPackage->business_name,
                             'is_recurring' => true,
                             'response_data' => json_encode($event),
                         ]);
-
+    
                         // Notify the user about the failed payment (you can add this logic)
                         Log::warning("Payment failed for user {$userPackage->user_id} on subscription {$invoice->subscription}");
                     }
                     break;
-
+    
                 case 'customer.subscription.deleted':
                     // Handle subscription cancellation or expiration
                     $subscription = $event->data->object;
-
+    
                     // Find the UserPackage by Stripe subscription ID
                     $userPackage = UserPackage::where('stripe_subscription_id', $subscription->id)->first();
                     if ($userPackage) {
@@ -224,24 +239,25 @@ class StripeController extends Controller
                         ]);
                     }
                     break;
-
+    
                 default:
                     // Log unhandled event types
                     Log::info('Unhandled Stripe event type: ' . $event->type);
                     break;
             }
-
+    
             // Return a 200 response to Stripe
             return response()->json(['message' => 'Webhook handled'], 200);
-
+    
         } catch (\Exception $e) {
             // Log any errors
             Log::error('Stripe webhook error: ' . $e->getMessage());
-
+    
             // Return a 400 response to Stripe
             return response()->json(['error' => 'Webhook Error: ' . $e->getMessage()], 400);
         }
     }
+    
 
     private function savePaymentMethodDetails(UserPackage $userPackage, string $stripeCustomerId)
 {

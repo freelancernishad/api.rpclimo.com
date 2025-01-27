@@ -32,7 +32,7 @@ class Vehicle extends Model
         'rate_per_minute',
         'surcharge_percentage',
         'waiting_charge_per_min', // Only for Round Trip
-        
+
     ];
 
     protected $casts = [
@@ -42,6 +42,11 @@ class Vehicle extends Model
     public function images()
     {
         return $this->hasMany(VehicleImage::class);
+    }
+
+    public function getFirstImageAttribute()
+    {
+        return $this->images()->select('vehicle_id', 'image_path')->first()->image_path ?? null;
     }
 
 }

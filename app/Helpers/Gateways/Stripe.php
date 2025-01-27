@@ -3,6 +3,7 @@
 use Stripe\Stripe;
 use App\Models\User;
 use App\Models\Coupon;
+use App\Models\Booking;
 use App\Models\Package;
 use App\Models\Payment;
 use App\Models\PackageAddon;
@@ -220,3 +221,46 @@ function createUserPackageAddons(int $userId, int $packageId, array $addonIds, $
         ]);
     }
 }
+
+
+
+
+
+    // Handle Stripe payment success
+    function BookingPaymentSuccess($booking)
+    {
+        // Mark the booking as paid
+        $booking->update(['payment_status' => 'paid']);
+
+        // Create a payment record
+        Payment::create([
+            'user_id' => $booking->user_id,
+            'gateway' => 'stripe',
+            'session_id' => $booking->stripe_session_id,
+            'transaction_id' => Payment::generateUniqueTransactionId(),
+            'currency' => 'usd',
+            'amount' => $booking->total_amount,
+            'status' => 'completed',
+            'payer_email' => $booking->email,
+            'paid_at' => now(),
+            'payable_type' => Booking::class,
+            'payable_id' => $booking->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Payment successful. Booking confirmed.',
+            'booking' => $booking,
+        ]);
+    }
+
+    // Handle Stripe payment cancellation
+    function BookingpaymentCancel($booking)
+    {
+        // Mark the booking as cancelled
+        $booking->update(['payment_status' => 'cancelled']);
+
+        return response()->json([
+            'message' => 'Payment cancelled. Booking not confirmed.',
+            'booking' => $booking,
+        ]);
+    }

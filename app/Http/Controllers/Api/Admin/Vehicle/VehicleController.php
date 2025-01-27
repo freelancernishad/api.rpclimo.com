@@ -6,18 +6,51 @@ use App\Models\Vehicle;
 use App\Models\VehicleImage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class VehicleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $vehicles = Vehicle::all();
+        // Number of items per page (default: 10)
+        $perPage = $request->input('per_page', 10);
+
+        // Search parameters
+        $numberOfPassengers = $request->input('number_of_passengers');
+        $numberOfBaggage = $request->input('number_of_baggage');
+
+        // Base query
+        $query = Vehicle::select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage');
+
+        // Apply search filters if provided
+        if ($numberOfPassengers) {
+            $query->where('number_of_passengers', '>=', $numberOfPassengers);
+        }
+        if ($numberOfBaggage) {
+            $query->where('number_of_baggage', '>=', $numberOfBaggage);
+        }
+
+        // Order by latest items and paginate
+        $vehicles = $query->orderBy('created_at', 'desc')
+                          ->paginate($perPage);
+
+        // Transform the collection to include the first image in the main JSON
+        $vehicles->getCollection()->transform(function ($vehicle) {
+            $vehicle->image = $vehicle->first_image; // Assuming `first_image` is an accessor in the Vehicle model
+            return $vehicle;
+        });
+
+        // Return the paginated results
         return response()->json($vehicles);
     }
 
+
     public function store(Request $request)
     {
-        $validated = $request->validate([
+
+         // Validate the request
+         $validator = Validator::make($request->all(), [
+            'vehicle_id' => 'required|exists:vehicles,id',
             'vehicle_name' => 'nullable|string',
             'license_no' => 'nullable|string',
             'vehicle_status' => 'nullable|string',
@@ -34,6 +67,11 @@ class VehicleController extends Controller
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
 
         $vehicle = Vehicle::create($validated);
 
