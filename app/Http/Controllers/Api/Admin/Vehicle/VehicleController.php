@@ -50,7 +50,6 @@ class VehicleController extends Controller
 
          // Validate the request
          $validator = Validator::make($request->all(), [
-            'vehicle_id' => 'required|exists:vehicles,id',
             'vehicle_name' => 'nullable|string',
             'license_no' => 'nullable|string',
             'vehicle_status' => 'nullable|string',
