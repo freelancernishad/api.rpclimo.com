@@ -12,7 +12,7 @@ class Payment extends Model
 
     protected $fillable = [
         'user_id', 'gateway', 'session_id','transaction_id', 'currency', 'amount', 'fee',
-        'status', 'response_data', 'payment_method', 'payer_email', 'paid_at','coupon_id','payable_type','payable_id','user_package_id', 'business_name'
+        'status', 'response_data', 'payment_method', 'payer_email', 'paid_at','coupon_id','payable_type','payable_id','user_package_id', 'business_name', 'stripe_session_id'
     ];
 
     protected $casts = [

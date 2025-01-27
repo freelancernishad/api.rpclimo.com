@@ -81,6 +81,9 @@ class BookingController extends Controller
                 return response()->json(['error' => 'Invalid trip type'], 400);
         }
 
+        // Convert totalPrice to cents and ensure it's an integer
+        $unitAmount = (int)($totalPrice * 100); // Convert to cents (integer)
+
         // Create the booking
         $booking = Booking::create([
             'vehicle_id' => $vehicle->id,
@@ -112,6 +115,7 @@ class BookingController extends Controller
         Stripe::setApiKey(config('STRIPE_SECRET'));
 
         try {
+            // Create the Stripe session with the updated unit_amount
             $session = Session::create([
                 'payment_method_types' => ['card'],
                 'line_items' => [
@@ -121,7 +125,7 @@ class BookingController extends Controller
                             'product_data' => [
                                 'name' => 'Booking #' . $booking->id,
                             ],
-                            'unit_amount' => $totalPrice * 100, // Convert to cents
+                            'unit_amount' => $unitAmount, // Use the integer value (in cents)
                         ],
                         'quantity' => 1,
                     ],

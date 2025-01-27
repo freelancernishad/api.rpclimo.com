@@ -39,6 +39,7 @@ class Booking extends Model
         'waiting_time',
         'confirmed_at',
         'cancelled_at',
+        'stripe_session_id',
     ];
 
     // Optional relationship to Vehicle
