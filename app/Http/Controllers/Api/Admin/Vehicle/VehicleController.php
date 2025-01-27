@@ -63,7 +63,7 @@ class VehicleController extends Controller
             'length' => 'nullable|string',
             'transmission' => 'nullable|string',
             'extra_features' => 'nullable|array',
-            'images' => 'nullable|array',
+            'images' => 'nullable',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
