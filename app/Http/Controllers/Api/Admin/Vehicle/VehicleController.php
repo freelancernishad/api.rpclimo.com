@@ -61,7 +61,7 @@ class VehicleController extends Controller
             'fuel_type' => 'nullable|string',
             'length' => 'nullable|string',
             'transmission' => 'nullable|string',
-            'extra_features' => 'nullable|array',
+            'extra_features' => 'nullable',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
