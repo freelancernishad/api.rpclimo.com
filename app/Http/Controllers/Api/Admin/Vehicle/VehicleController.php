@@ -19,8 +19,14 @@ class VehicleController extends Controller
         $numberOfPassengers = $request->input('number_of_passengers');
         $numberOfBaggage = $request->input('number_of_baggage');
 
+        // Trip parameters from the request (with default values if not provided)
+        $defaultTripType = $request->input('trip_type', 'Hourly'); // Default to 'Hourly' if not provided
+        $defaultDistance = $request->input('distance', 10); // Default to 10 miles if not provided
+        $defaultDuration = $request->input('duration', 60); // Default to 60 minutes if not provided
+        $defaultWaitingTime = $request->input('waiting_time', 0); // Default to 0 minutes if not provided
+
         // Base query
-        $query = Vehicle::select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage');
+        $query = Vehicle::select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min');
 
         // Apply search filters if provided
         if ($numberOfPassengers) {
@@ -34,9 +40,19 @@ class VehicleController extends Controller
         $vehicles = $query->orderBy('created_at', 'desc')
                           ->paginate($perPage);
 
-        // Transform the collection to include the first image in the main JSON
-        $vehicles->getCollection()->transform(function ($vehicle) {
+        // Transform the collection to include the first image and calculated price
+        $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
+            // Add the first image to the vehicle object
             $vehicle->image = $vehicle->first_image; // Assuming `first_image` is an accessor in the Vehicle model
+
+            // Calculate the estimated price for the provided or default trip parameters
+            $vehicle->estimated_price = $vehicle->calculateTripPrice(
+                $defaultTripType,
+                $defaultDistance,
+                $defaultDuration,
+                $defaultWaitingTime
+            );
+
             return $vehicle;
         });
 

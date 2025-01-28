@@ -33,6 +33,8 @@ class BookingController extends Controller
             'contact_no' => 'nullable|string',
             'number_of_passengers_booked' => 'required|integer',
             'number_of_kids' => 'nullable|integer',
+            'total_distance' => 'required|numeric|min:0', // Total distance in miles
+            'total_duration' => 'required|integer|min:0', // Total duration in minutes
         ]);
 
         if ($validator->fails()) {
@@ -46,42 +48,15 @@ class BookingController extends Controller
             return response()->json(['error' => 'Vehicle not found'], 404);
         }
 
-        // Calculate the total price based on trip type
-        $tripType = $request->trip_type;
-        $totalDistance = $request->input('total_distance', 0); // Total distance in miles
-        $totalDuration = $request->input('total_duration', 0); // Total time in minutes
-        $waitingTime = $request->input('waiting_time', 0); // Waiting time in minutes
+        // Calculate the total price using the Vehicle model's method
+        $totalPrice = $vehicle->calculateTripPrice(
+            $request->trip_type,
+            $request->total_distance,
+            $request->total_duration,
+            $request->waiting_time
+        );
 
-        $totalPrice = 0;
-
-        switch ($tripType) {
-            case 'Hourly':
-                $hours = max(ceil($totalDuration / 60), $vehicle->minimum_hour); // Calculate hours, ensure minimum hour
-                $totalPrice = $vehicle->hourly_rate * $hours;
-                break;
-
-            case 'Pay Per Ride':
-                $distanceCost = $totalDistance * $vehicle->rate_per_mile;
-                $timeCost = $totalDuration * $vehicle->rate_per_minute;
-                $baseFare = $vehicle->base_fare_price;
-                $surcharge = ($baseFare + $distanceCost + $timeCost) * ($vehicle->surcharge_percentage / 100);
-                $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge;
-                break;
-
-            case 'Round Trip':
-                $distanceCost = $totalDistance * $vehicle->rate_per_mile * 2; // Round trip doubles the distance
-                $timeCost = $totalDuration * $vehicle->rate_per_minute * 2; // Round trip doubles the time
-                $baseFare = $vehicle->base_fare_price * 2; // Round trip doubles the base fare
-                $waitingCost = $waitingTime * $vehicle->waiting_charge_per_min;
-                $surcharge = ($baseFare + $distanceCost + $timeCost) * ($vehicle->surcharge_percentage / 100);
-                $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge + $waitingCost;
-                break;
-
-            default:
-                return response()->json(['error' => 'Invalid trip type'], 400);
-        }
-
-        // Convert totalPrice to cents and ensure it's an integer
+        // Convert totalPrice to cents for Stripe
         $unitAmount = (int)($totalPrice * 100); // Convert to cents (integer)
 
         // Create the booking
@@ -96,10 +71,10 @@ class BookingController extends Controller
             'pickup_time' => $request->pickup_time,
             'pickup_location' => $request->pickup_location,
             'drop_location' => $request->drop_location,
-            'trip_type' => $tripType,
-            'total_distance' => $totalDistance,
-            'total_duration' => $totalDuration,
-            'waiting_time' => $waitingTime,
+            'trip_type' => $request->trip_type,
+            'total_distance' => $request->total_distance,
+            'total_duration' => $request->total_duration,
+            'waiting_time' => $request->waiting_time,
             'full_name' => $request->full_name,
             'phone_no' => $request->phone_no,
             'email' => $request->email,
