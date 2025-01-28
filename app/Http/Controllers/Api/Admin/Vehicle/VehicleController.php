@@ -47,9 +47,8 @@ class VehicleController extends Controller
 
     public function store(Request $request)
     {
-
-         // Validate the request
-         $validator = Validator::make($request->all(), [
+        // Validate the request
+        $validator = Validator::make($request->all(), [
             'vehicle_name' => 'nullable|string',
             'license_no' => 'nullable|string',
             'vehicle_status' => 'nullable|string',
@@ -63,7 +62,7 @@ class VehicleController extends Controller
             'length' => 'nullable|string',
             'transmission' => 'nullable|string',
             'extra_features' => 'nullable|array',
-            'images' => 'nullable',
+            'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -71,9 +70,13 @@ class VehicleController extends Controller
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
+        // Get validated data
+        $validated = $validator->validated();
 
+        // Create the vehicle
         $vehicle = Vehicle::create($validated);
 
+        // Handle image uploads if present
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $filePath = uploadFileToS3($image, 'vehicle_images');
@@ -86,6 +89,7 @@ class VehicleController extends Controller
 
         return response()->json($vehicle, 201);
     }
+
 
 
 
