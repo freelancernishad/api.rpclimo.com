@@ -111,7 +111,7 @@ class VehicleController extends Controller
 
     public function show($id)
     {
-        $vehicle = Vehicle::findOrFail($id);
+        $vehicle = Vehicle::with('images')->findOrFail($id);
         return response()->json($vehicle);
     }
 
