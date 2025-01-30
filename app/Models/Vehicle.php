@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Vehicle extends Model
 {
@@ -61,6 +62,7 @@ class Vehicle extends Model
         switch ($tripType) {
             case 'Hourly':
                 $hours = max(ceil($totalDuration / 60), $this->minimum_hour); // Calculate hours, ensure minimum hour
+                Log::info($hours);
                 $totalPrice = $this->hourly_rate * $hours;
                 break;
 
