@@ -61,6 +61,7 @@ class BookingController extends Controller
         // Convert totalPrice to cents for Stripe
         $unitAmount = (int)($totalPrice * 100); // Convert to cents (integer)
 
+        $pickupDate = \Carbon\Carbon::parse($request->pickup_date)->format('Y-m-d H:i:s');
         // Create the booking
         $booking = Booking::create([
             'vehicle_id' => $vehicle->id,
@@ -69,7 +70,7 @@ class BookingController extends Controller
             'license_no' => $vehicle->license_no,
             'number_of_passengers' => $vehicle->number_of_passengers,
             'number_of_baggage' => $vehicle->number_of_baggage,
-            'pickup_date' => $request->pickup_date,
+            'pickup_date' => $pickupDate,
             'pickup_time' => $request->pickup_time,
             'pickup_location' => $request->pickup_location,
             'drop_location' => $request->drop_location,
