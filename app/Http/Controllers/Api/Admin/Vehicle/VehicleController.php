@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Vehicle;
 use App\Models\Vehicle;
 use App\Models\VehicleImage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 
@@ -52,6 +53,7 @@ class VehicleController extends Controller
                 $defaultDuration,
                 $defaultWaitingTime
             );
+            Log::info($vehicle->estimated_price);
 
             return $vehicle;
         });

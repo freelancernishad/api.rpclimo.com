@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AllowedOriginController;
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\Api\Admin\Users\UserController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
+use App\Http\Controllers\Api\Admin\Booking\BookingController;
 use App\Http\Controllers\Api\Admin\Vehicle\VehicleController;
 use App\Http\Controllers\Api\Admin\Package\AdminPackageController;
 use App\Http\Controllers\Api\Notifications\NotificationController;
@@ -178,6 +179,11 @@ Route::prefix('admin')->group(function () {
         });
 
 
+        Route::prefix('booking')->group(function () {
+            Route::get('/', [BookingController::class, 'index']); // List bookings
+            Route::get('/{id}', [BookingController::class, 'show']); // Get single booking
+            Route::patch('/{id}/status', [BookingController::class, 'updateStatus']); // Update status
+        });
 
 
 

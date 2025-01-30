@@ -48,9 +48,8 @@ class Booking extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
-        // Relationship to Payment
-        public function payments()
-        {
-            return $this->hasMany(Payment::class);
-        }
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
 }
