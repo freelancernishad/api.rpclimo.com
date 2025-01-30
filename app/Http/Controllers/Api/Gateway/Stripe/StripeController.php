@@ -120,7 +120,7 @@ class StripeController extends Controller
                                 if ($booking) {
                                     // Perform any updates or actions specific to the booking
                                     $booking->update([
-                                        'payment_status' => 'confirmed', // Update payment status to completed
+                                        'payment_status' => 'completed', // Update payment status to completed
                                         'amount_paid' => $session->amount_total / 100, // Convert from cents to dollars
                                         'confirmed_at' => now(), // Set confirmed_at timestamp
                                     ]);
