@@ -15,7 +15,7 @@ class AddTotalDurationAndTotalDistanceToBookingsTable extends Migration
     {
         Schema::table('bookings', function (Blueprint $table) {
             $table->integer('total_duration')->nullable()->after('trip_type')->comment('Total duration of the trip in minutes');
-            $table->decimal('total_distance', 8, 2)->nullable()->after('total_duration')->comment('Total distance of the trip in kilometers');
+            $table->decimal('total_distance', 12, 2)->nullable()->after('total_duration')->comment('Total distance of the trip in kilometers');
         });
     }
 
