@@ -59,31 +59,44 @@ class Vehicle extends Model
      */
     public function calculateTripPrice($tripType, $totalDistance, $totalDuration, $waitingTime = 0)
     {
-        // Ensure numeric values are converted to integers
+        // Convert all input values to appropriate numeric types
         $totalDistance = (float) $totalDistance;
         $totalDuration = (int) $totalDuration;
         $waitingTime = (int) $waitingTime;
 
+        // Convert duration from seconds to minutes
+        $totalMinutes = ceil($totalDuration / 60);
+
+        // Fetch vehicle pricing details, ensuring correct data types
+        $hourlyRate = (float) $this->hourly_rate;
+        $minimumHour = (int) $this->minimum_hour;
+        $ratePerMile = (float) $this->rate_per_mile;
+        $ratePerMinute = (float) $this->rate_per_minute;
+        $baseFare = (float) $this->base_fare_price;
+        $surchargePercentage = (float) $this->surcharge_percentage;
+        $waitingChargePerMin = (float) $this->waiting_charge_per_min;
+
         switch ($tripType) {
             case 'Hourly':
-                $hours = max(ceil($totalDuration / 60), (int) $this->minimum_hour); // Ensure minimum hour is an integer
-                $totalPrice = $this->hourly_rate * $hours;
+                // Convert total minutes to hours and apply minimum hour rule
+                $hours = max(ceil($totalMinutes / 60), $minimumHour);
+                $totalPrice = $hourlyRate * $hours;
                 break;
 
             case 'Pay Per Ride':
-                $distanceCost = $totalDistance * (float) $this->rate_per_mile;
-                $timeCost = $totalDuration * (float) $this->rate_per_minute;
-                $baseFare = (float) $this->base_fare_price;
-                $surcharge = ($baseFare + $distanceCost + $timeCost) * ((float) $this->surcharge_percentage / 100);
+                $distanceCost = $totalDistance * $ratePerMile;
+                $timeCost = $totalMinutes * $ratePerMinute;
+                $surcharge = ($baseFare + $distanceCost + $timeCost) * ($surchargePercentage / 100);
                 $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge;
                 break;
 
             case 'Round Trip':
-                $distanceCost = $totalDistance * (float) $this->rate_per_mile * 2; // Double the distance
-                $timeCost = $totalDuration * (float) $this->rate_per_minute * 2; // Double the time
-                $baseFare = (float) $this->base_fare_price * 2; // Double the base fare
-                $waitingCost = $waitingTime * (float) $this->waiting_charge_per_min;
-                $surcharge = ($baseFare + $distanceCost + $timeCost) * ((float) $this->surcharge_percentage / 100);
+                // Round trip doubles distance and time costs
+                $distanceCost = ($totalDistance * $ratePerMile) * 2;
+                $timeCost = ($totalMinutes * $ratePerMinute) * 2;
+                $baseFare *= 2; // Double the base fare
+                $waitingCost = $waitingTime * $waitingChargePerMin;
+                $surcharge = ($baseFare + $distanceCost + $timeCost) * ($surchargePercentage / 100);
                 $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge + $waitingCost;
                 break;
 
@@ -91,7 +104,8 @@ class Vehicle extends Model
                 throw new \InvalidArgumentException('Invalid trip type');
         }
 
-        return round($totalPrice, 2); // Ensure the total price is formatted to 2 decimal places
+        return round($totalPrice, 2);
     }
+
 
 }
