@@ -33,8 +33,10 @@ class BookingController extends Controller
             'contact_no' => 'nullable|string',
             'number_of_passengers_booked' => 'required|integer',
             'number_of_kids' => 'nullable|integer',
-            'total_distance' => 'required|numeric|min:0', // Total distance in miles
-            'total_duration' => 'required|integer|min:0', // Total duration in minutes
+            'total_distance' => 'required|numeric|min:0',
+            'total_duration' => 'required|integer|min:0',
+            'success_url' => 'nullable|url',
+            'cancel_url' => 'nullable|url',
         ]);
 
         if ($validator->fails()) {
@@ -90,6 +92,17 @@ class BookingController extends Controller
         Stripe::setApiKey(config('STRIPE_SECRET'));
 
         try {
+
+
+            // Construct success and cancel URLs with booking ID
+            $successUrl = $request->success_url
+            ? "{$request->success_url}?booking={$booking->id}"
+            : url("/success?booking={$booking->id}");
+
+            $cancelUrl = $request->cancel_url
+            ? "{$request->cancel_url}?booking={$booking->id}"
+            : url("/cancel?booking={$booking->id}");
+
             // Create the Stripe session with the updated unit_amount
             $session = Session::create([
                 'payment_method_types' => ['card'],
@@ -106,8 +119,8 @@ class BookingController extends Controller
                     ],
                 ],
                 'mode' => 'payment',
-                'success_url' => "http://localhost:8000/success?booking=$booking->id",
-                'cancel_url' => "http://localhost:8000/cancel?booking=$booking->id",
+                'success_url' => "$successUrl",
+                'cancel_url' => "$cancelUrl",
             ]);
 
             // Update booking with session ID
