@@ -40,12 +40,13 @@ class VehicleController extends Controller
         // Order by latest items and paginate
         $vehicles = $query->orderBy('created_at', 'desc')
                           ->paginate($perPage);
+                          
+        Log::info($request->all);
 
         // Transform the collection to include the first image and calculated price
         $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
             // Add the first image to the vehicle object
             $vehicle->image = $vehicle->first_image; // Assuming `first_image` is an accessor in the Vehicle model
-
             // Calculate the estimated price for the provided or default trip parameters
             $vehicle->estimated_price = $vehicle->calculateTripPrice(
                 $defaultTripType,
