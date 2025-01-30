@@ -41,7 +41,7 @@ class VehicleController extends Controller
         $vehicles = $query->orderBy('created_at', 'desc')
                           ->paginate($perPage);
 
-        Log::info($request->all());
+        Log::info("all datas : $request->all()");
 
         // Transform the collection to include the first image and calculated price
         $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
@@ -54,7 +54,7 @@ class VehicleController extends Controller
                 $defaultDuration,
                 $defaultWaitingTime
             );
-            Log::info($vehicle->estimated_price);
+            Log::info("estimated_price : $vehicle->estimated_price");
 
             return $vehicle;
         });

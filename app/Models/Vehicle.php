@@ -62,7 +62,7 @@ class Vehicle extends Model
         switch ($tripType) {
             case 'Hourly':
                 $hours = max(ceil($totalDuration / 60), $this->minimum_hour); // Calculate hours, ensure minimum hour
-                Log::info($hours);
+                Log::info("hours : $hours");
                 $totalPrice = $this->hourly_rate * $hours;
                 break;
 
