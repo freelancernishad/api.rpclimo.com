@@ -40,8 +40,8 @@ class VehicleController extends Controller
         // Order by latest items and paginate
         $vehicles = $query->orderBy('created_at', 'desc')
                           ->paginate($perPage);
-                          
-        Log::info($request->all);
+
+        Log::info($request->all());
 
         // Transform the collection to include the first image and calculated price
         $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
