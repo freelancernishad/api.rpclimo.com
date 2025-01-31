@@ -175,8 +175,10 @@ Route::prefix('admin')->group(function () {
 
             // Upload images for a specific vehicle
             Route::post('/{vehicle}/upload-images', [VehicleController::class, 'uploadImages']);
+
             Route::put('/{vehicle}/update-pricing', [VehicleController::class, 'updatePricing']);
         });
+        Route::delete('/vehicle-images/{imageId}/remove', [VehicleController::class, 'removeImage']);
 
 
         Route::prefix('booking')->group(function () {

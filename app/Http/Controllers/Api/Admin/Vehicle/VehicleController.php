@@ -174,6 +174,19 @@ class VehicleController extends Controller
     }
 
 
+    public function removeImage(Request $request, $imageId)
+    {
+        $image = VehicleImage::findOrFail($imageId);
+
+        // Delete image from S3
+        // deleteFileFromS3($image->image_path);
+
+        // Remove from database
+        $image->delete();
+
+        return response()->json(['message' => 'Image removed successfully'], 200);
+    }
+
 
 
 
