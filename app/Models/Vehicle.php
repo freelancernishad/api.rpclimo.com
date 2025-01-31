@@ -104,8 +104,22 @@ class Vehicle extends Model
                 throw new \InvalidArgumentException('Invalid trip type');
         }
 
+        // Add extra charges to the total price
+        $extraCharges = $this->calculateExtraCharges($totalPrice);
+        $totalPrice += $extraCharges;
+
         return round($totalPrice, 2);
     }
 
+
+    public function extraPricings()
+    {
+        return $this->hasMany(VehicleExtraPricing::class);
+    }
+
+    public function calculateExtraCharges($subtotal)
+    {
+        return $this->extraPricings->sum(fn($extra) => $extra->calculateCharge($subtotal));
+    }
 
 }

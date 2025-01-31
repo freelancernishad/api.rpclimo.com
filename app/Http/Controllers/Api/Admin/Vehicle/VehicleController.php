@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Vehicle;
 use App\Models\Vehicle;
 use App\Models\VehicleImage;
 use Illuminate\Http\Request;
+use App\Models\VehicleExtraPricing;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -27,7 +28,7 @@ class VehicleController extends Controller
         $defaultWaitingTime = $request->input('waiting_time', 0); // Default to 0 minutes if not provided
 
         // Base query
-        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min');
+        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min','extra_features');
 
         // Apply search filters if provided
         if ($numberOfPassengers) {
@@ -189,8 +190,8 @@ class VehicleController extends Controller
         // Find the vehicle by ID
         $vehicle = Vehicle::findOrFail($id);
 
-        // Validate the request data
-        $validated = $request->validate([
+        // Validate base pricing fields
+        $validatedVehicle = $request->validate([
             'hourly_rate' => 'nullable|numeric',
             'minimum_hour' => 'nullable|integer',
             'base_fare_price' => 'nullable|numeric',
@@ -200,14 +201,44 @@ class VehicleController extends Controller
             'waiting_charge_per_min' => 'nullable|numeric',
         ]);
 
-        // Update the vehicle's pricing details
-        $vehicle->update($validated);
+        // Update base pricing in the `vehicles` table
+        $vehicle->update($validatedVehicle);
 
-        // Return the updated vehicle
+        // Validate extra pricing fields
+        $validatedExtraPricing = $request->validate([
+            'extra_pricings' => 'nullable|array',
+            'extra_pricings.*.name' => 'required_with:extra_pricings|string',
+            'extra_pricings.*.type' => 'required_with:extra_pricings|in:percentage,fixed',
+            'extra_pricings.*.value' => 'required_with:extra_pricings|numeric|min:0',
+        ]);
+
+        // Process each extra pricing entry
+        if (!empty($validatedExtraPricing['extra_pricings'])) {
+            foreach ($validatedExtraPricing['extra_pricings'] as $extraPricingData) {
+                VehicleExtraPricing::updateOrCreate(
+                    [
+                        'vehicle_id' => $vehicle->id,
+                        'name' => $extraPricingData['name'],
+                    ],
+                    [
+                        'type' => $extraPricingData['type'],
+                        'value' => $extraPricingData['value'],
+                    ]
+                );
+            }
+        }
+
+        // Refresh vehicle data to include updated extra pricing
+        $vehicle->load('extraPricings');
+
         return response()->json([
             'message' => 'Pricing details updated successfully',
-            'data' => $vehicle,
+            'data' => [
+                'vehicle' => $vehicle,
+                'extra_pricings' => $vehicle->extraPricings, // Now returns extra pricing details
+            ],
         ]);
     }
+
 
 }
