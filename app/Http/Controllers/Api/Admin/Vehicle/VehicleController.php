@@ -156,10 +156,18 @@ class VehicleController extends Controller
         $vehicle = Vehicle::findOrFail($id);
 
         $request->validate([
-            'images' => 'required|array',
+            'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'deleted_ids' => 'nullable|array',
+            'deleted_ids.*' => 'exists:vehicle_images,id',
         ]);
 
+        // Delete existing images if any IDs are provided
+        if ($request->has('deleted_ids')) {
+            VehicleImage::whereIn('id', $request->deleted_ids)->delete();
+        }
+
+        // Upload new images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $filePath = uploadFileToS3($image, 'vehicle_images');
@@ -170,8 +178,9 @@ class VehicleController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Images uploaded successfully'], 200);
+        return response()->json(['message' => 'Images updated successfully'], 200);
     }
+
 
 
     public function removeImage(Request $request, $imageId)
