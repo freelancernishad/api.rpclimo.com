@@ -5,6 +5,7 @@ use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Controllers\Api\AllowedOriginController;
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\Api\Admin\Users\UserController;
+use App\Http\Controllers\Api\Admin\Quote\QuoteController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\Booking\BookingController;
 use App\Http\Controllers\Api\Admin\Vehicle\VehicleController;
@@ -188,6 +189,16 @@ Route::prefix('admin')->group(function () {
         });
 
 
+        Route::prefix('/quote')->group(function () {
+            Route::get('/', [QuoteController::class, 'index']); // Get all quotes
+            Route::post('/', [QuoteController::class, 'store']); // Create a new quote
+            Route::get('/{id}', [QuoteController::class, 'show']); // Get a specific quote
+            Route::put('/{id}', [QuoteController::class, 'update']); // Update a quote
+            Route::delete('/{id}', [QuoteController::class, 'destroy']); // Delete a quote
+            Route::patch('/{id}/status', [QuoteController::class, 'updateStatus']); // Update quote status
+            Route::patch('/{id}/assign', [QuoteController::class, 'assignToAdmin']); // Assign quote to admin
+            Route::patch('/{id}/payment', [QuoteController::class, 'updatePaymentStatus']); // Update payment status
+        });
 
 
 

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Global\BookingController;
+use App\Http\Controllers\Api\Admin\Quote\QuoteController;
 use App\Http\Controllers\Api\Server\ServerStatusController;
 use App\Http\Controllers\Api\Admin\Vehicle\VehicleController;
 use App\Http\Controllers\Api\User\Package\UserPackageController;
@@ -57,7 +58,7 @@ Route::prefix('global/')->group(function () {
 
         Route::post('vehicle/checkout', [BookingController::class, 'store']);
 
-
+        Route::post('quote', [QuoteController::class, 'store']);
 
 
 
