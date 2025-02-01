@@ -198,6 +198,7 @@ Route::prefix('admin')->group(function () {
             Route::patch('/{id}/status', [QuoteController::class, 'updateStatus']); // Update quote status
             Route::patch('/{id}/assign', [QuoteController::class, 'assignToAdmin']); // Assign quote to admin
             Route::patch('/{id}/payment', [QuoteController::class, 'updatePaymentStatus']); // Update payment status
+            Route::patch('/{id}/admin-details', [QuoteController::class, 'updateAdminDetails']);
         });
 
 

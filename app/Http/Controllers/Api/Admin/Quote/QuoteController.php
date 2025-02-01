@@ -269,4 +269,47 @@ class QuoteController extends Controller
 
         return response()->json(['quote' => $quote, 'message' => 'Payment status updated successfully'], 200);
     }
+
+    /**
+     * Update admin notes and quote price for a specific quote.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateAdminDetails(Request $request, $id)
+    {
+        // Find the quote by ID
+        $quote = QuoteRequest::find($id);
+
+        // If quote not found, return 404
+        if (!$quote) {
+            return response()->json(['message' => 'Quote request not found'], 404);
+        }
+
+        // Validate the request data
+        $validator = Validator::make($request->all(), [
+            'admin_notes' => 'nullable|string', // Admin notes (optional)
+            'quote_price' => 'nullable|numeric', // Quote price (optional)
+        ]);
+
+        // If validation fails, return errors
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        // Update the quote with the provided data
+        if ($request->has('admin_notes')) {
+            $quote->admin_notes = $request->input('admin_notes');
+        }
+        if ($request->has('quote_price')) {
+            $quote->quote_price = $request->input('quote_price');
+        }
+
+        // Save the changes
+        $quote->save();
+
+        // Return the updated quote
+        return response()->json(['quote' => $quote, 'message' => 'Admin details updated successfully'], 200);
+    }
 }
