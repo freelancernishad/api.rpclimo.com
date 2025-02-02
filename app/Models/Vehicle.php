@@ -82,8 +82,19 @@ class Vehicle extends Model
                 // $hours = max(ceil($totalMinutes / 60), $minimumHour);
                 // $totalPrice = $hourlyRate * $hours;
 
-                $totalHours = $totalMinutes / 60; 
-                $totalPrice = $hourlyRate * $totalHours;
+                // $totalHours = $totalMinutes / 60; 
+                // $totalPrice = $hourlyRate * $totalHours;
+
+
+    
+                $totalHours = $totalMinutes / 60; // Convert minutes to hours
+
+                if ($totalHours <= $minimumHour) {
+                    $totalPrice = $hourlyRate * $minimumHour; // Charge for at least 2 hours
+                } else {
+                    $totalPrice = $hourlyRate * $totalHours; // Charge for the exact hours
+                }
+
 
                 break;
 
