@@ -73,7 +73,7 @@ class SliderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:jpg,jpeg,png,mp4,mov,avi|max:10240', // Max 10MB
+            'file' => 'required|file|mimes:jpg,jpeg,png,webp,mp4,mov,avi|max:10240', // Added webp support
         ]);
 
         if ($validator->fails()) {
@@ -106,6 +106,7 @@ class SliderController extends Controller
         return response()->json(['status' => true, 'message' => 'Slider created successfully', 'data' => $slider], 201);
     }
 
+
     /**
      * Display the specified slider.
      */
@@ -127,24 +128,24 @@ class SliderController extends Controller
         if (!$slider) {
             return response()->json(['status' => false, 'message' => 'Slider not found'], 404);
         }
-
+    
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
-            'file' => 'sometimes|file|mimes:jpg,jpeg,png,mp4,mov,avi|max:10240',
+            'file' => 'sometimes|file|mimes:jpg,jpeg,png,webp,mp4,mov,avi|max:10240', // Added webp support
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
-
+    
         // Update file if new one is uploaded
         if ($request->hasFile('file')) {
             // Delete old file from S3
             Storage::disk('s3')->delete($slider->file);
-
+    
             $file = $request->file('file');
             $mimeType = $file->getMimeType();
-
+    
             // Set type based on MIME type
             if (strpos($mimeType, 'image') !== false) {
                 $slider->type = 'image';
@@ -153,15 +154,16 @@ class SliderController extends Controller
             } else {
                 return response()->json(['status' => false, 'message' => 'Unsupported file type'], 422);
             }
-
+    
             // Upload new file to S3
             $slider->file = uploadFileToS3($file, 'sliders');
         }
-
+    
         $slider->update($request->only('title', 'type'));
-
+    
         return response()->json(['status' => true, 'message' => 'Slider updated successfully', 'data' => $slider], 200);
     }
+    
 
     /**
      * Remove the specified slider.
