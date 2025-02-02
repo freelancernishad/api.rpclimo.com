@@ -103,13 +103,13 @@ class Vehicle extends Model
             case 'Pay Per Ride':
 
                 $distanceCost = $totalDistance * $ratePerMile;
-                Log::info("distanceCost $distanceCost");
+                // Log::info("distanceCost $distanceCost");
                 $timeCost = $totalMinutes * $ratePerMinute;
-                Log::info("timeCost $timeCost");
+                // Log::info("timeCost $timeCost");
                 $surcharge = ($baseFare + $distanceCost + $timeCost) * ($surchargePercentage / 100);
-                Log::info("surcharge $surcharge");
+                // Log::info("surcharge $surcharge");
                 $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge;
-                Log::info("totalPrice $totalPrice");
+                // Log::info("totalPrice $totalPrice");
 
 
                 break;
