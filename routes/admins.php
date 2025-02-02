@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AllowedOriginController;
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\Api\Admin\Users\UserController;
 use App\Http\Controllers\Api\Admin\Quote\QuoteController;
+use App\Http\Controllers\Api\Admin\Slider\SliderController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
 use App\Http\Controllers\Api\Admin\Booking\BookingController;
 use App\Http\Controllers\Api\Admin\Vehicle\VehicleController;
@@ -202,6 +203,14 @@ Route::prefix('admin')->group(function () {
         });
 
 
+
+        Route::prefix('slider')->group(function () {
+            Route::get('/', [SliderController::class, 'index']);
+            Route::post('/', [SliderController::class, 'store']);
+            Route::get('/{id}', [SliderController::class, 'show']);
+            Route::post('/{id}', [SliderController::class, 'update']);
+            Route::delete('/{id}', [SliderController::class, 'destroy']);
+        });
 
 
 
