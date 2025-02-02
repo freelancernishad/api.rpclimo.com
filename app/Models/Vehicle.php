@@ -65,7 +65,7 @@ class Vehicle extends Model
         $waitingTime = (int) $waitingTime;
 
         // Convert duration from seconds to minutes
-        $totalMinutes = ceil($totalDuration / 60);
+        $totalMinutes = $totalDuration;
 
         // Fetch vehicle pricing details, ensuring correct data types
         $hourlyRate = (float) $this->hourly_rate;
@@ -82,11 +82,13 @@ class Vehicle extends Model
                 // $hours = max(ceil($totalMinutes / 60), $minimumHour);
                 // $totalPrice = $hourlyRate * $hours;
 
-                // $totalHours = $totalMinutes / 60; 
+
+
+                // $totalHours = $totalMinutes / 60;
                 // $totalPrice = $hourlyRate * $totalHours;
 
 
-    
+
                 $totalHours = $totalMinutes / 60; // Convert minutes to hours
 
                 if ($totalHours <= $minimumHour) {
@@ -99,10 +101,17 @@ class Vehicle extends Model
                 break;
 
             case 'Pay Per Ride':
+
                 $distanceCost = $totalDistance * $ratePerMile;
+                Log::info("distanceCost $distanceCost");
                 $timeCost = $totalMinutes * $ratePerMinute;
+                Log::info("timeCost $timeCost");
                 $surcharge = ($baseFare + $distanceCost + $timeCost) * ($surchargePercentage / 100);
+                Log::info("surcharge $surcharge");
                 $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge;
+                Log::info("totalPrice $totalPrice");
+
+
                 break;
 
             case 'Round Trip':
