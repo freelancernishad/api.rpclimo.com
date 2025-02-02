@@ -23,6 +23,7 @@ class SliderController extends Controller
             $sliders = Slider::latest()->get();
         } else {
             $sliders = Slider::latest()->get(); // No filter, get all sliders
+            return response()->json($sliders, 200);
         }
 
         // Initialize arrays for formatted sliders
