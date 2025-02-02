@@ -20,7 +20,7 @@ class SliderController extends Controller
 
         // Filter by type if provided
         if ($type) {
-            $sliders = Slider::where('type', $type)->latest()->get();
+            $sliders = Slider::latest()->get();
         } else {
             $sliders = Slider::latest()->get(); // No filter, get all sliders
         }
@@ -31,12 +31,15 @@ class SliderController extends Controller
 
         // Format the response based on the type
         foreach ($sliders as $slider) {
+            // Set action to true for the type that is active in the request
+            $action = $type && $slider->type == $type ? true : false;
+
             if ($slider->type == 'video') {
                 // Add video slider data
                 $formattedSliders[] = [
                     'id' => $slider->id,
                     'title' => $slider->title,
-                    'action' => true,  // Assuming 'action' is true for video type
+                    'action' => $action,  // Set action dynamically based on type
                     'video' => $slider->file,  // The path to the video
                 ];
             }
@@ -54,15 +57,14 @@ class SliderController extends Controller
         // If there are image sliders, we include them under the carousel key
         if (count($carouselImages) > 0) {
             $formattedSliders[] = [
-                // 'id' => 'image-carousel',
-                // 'title' => 'Image Carousel',
-                'action' => true,  // Assuming 'action' is false for image type
+                'action' => $type == 'image' ? true : false,  // Set action dynamically for image type
                 'carousel' => $carouselImages,  // Array of dynamic images
             ];
         }
 
         return response()->json($formattedSliders, 200);
     }
+
 
 
 
@@ -128,24 +130,24 @@ class SliderController extends Controller
         if (!$slider) {
             return response()->json(['status' => false, 'message' => 'Slider not found'], 404);
         }
-    
+
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|required|string|max:255',
             'file' => 'sometimes|file|mimes:jpg,jpeg,png,webp,mp4,mov,avi|max:10240', // Added webp support
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
-    
+
         // Update file if new one is uploaded
         if ($request->hasFile('file')) {
             // Delete old file from S3
             Storage::disk('s3')->delete($slider->file);
-    
+
             $file = $request->file('file');
             $mimeType = $file->getMimeType();
-    
+
             // Set type based on MIME type
             if (strpos($mimeType, 'image') !== false) {
                 $slider->type = 'image';
@@ -154,16 +156,16 @@ class SliderController extends Controller
             } else {
                 return response()->json(['status' => false, 'message' => 'Unsupported file type'], 422);
             }
-    
+
             // Upload new file to S3
             $slider->file = uploadFileToS3($file, 'sliders');
         }
-    
+
         $slider->update($request->only('title', 'type'));
-    
+
         return response()->json(['status' => true, 'message' => 'Slider updated successfully', 'data' => $slider], 200);
     }
-    
+
 
     /**
      * Remove the specified slider.
