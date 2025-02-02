@@ -79,8 +79,12 @@ class Vehicle extends Model
         switch ($tripType) {
             case 'Hourly':
                 // Convert total minutes to hours and apply minimum hour rule
-                $hours = max(ceil($totalMinutes / 60), $minimumHour);
-                $totalPrice = $hourlyRate * $hours;
+                // $hours = max(ceil($totalMinutes / 60), $minimumHour);
+                // $totalPrice = $hourlyRate * $hours;
+
+                $totalHours = $totalMinutes / 60; 
+                $totalPrice = $hourlyRate * $totalHours;
+
                 break;
 
             case 'Pay Per Ride':
