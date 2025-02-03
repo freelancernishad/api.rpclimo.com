@@ -133,7 +133,7 @@ class SliderController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'title' => 'sometimes|required|string|max:255',
+            'title' => 'sometimes|string|max:255',
             'file' => 'sometimes|file|mimes:jpg,jpeg,png,webp,mp4,mov,avi|max:10240', // Added webp support
         ]);
 
