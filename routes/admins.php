@@ -50,6 +50,10 @@ Route::prefix('admin')->group(function () {
         // Dashboard
         Route::get('dashboard', [AdminDashboardController::class, 'index']);
 
+        Route::get('dashboard/matrics', [AdminDashboardController::class, 'dashboardMatrics']);
+
+
+
         Route::prefix('users')->group(function () {
             Route::get('/', [UserController::class, 'index']);          // List users
             Route::post('/', [UserController::class, 'store']);         // Create user

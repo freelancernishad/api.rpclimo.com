@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin\DashboardMetrics;
 
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Booking;
 use App\Models\Package;
 use App\Models\Payment;
+use App\Models\Vehicle;
 use App\Models\UserPackage;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -111,6 +113,48 @@ class AdminDashboardController extends Controller
              'revenue_by_date' => $revenueByDate, // Revenue by package within date range
              'total_revenue' => (int) $totalRevenue, // Total revenue across all packages
          ]);
+     }
+
+
+
+     public function dashboardMatrics()
+     {
+       // New Trips (Bookings) in the Last 7 Days (Completed Payments Only)
+       $newTripsLast7Days = Booking::where('payment_status', 'completed')
+       ->where('created_at', '>=', now()->subDays(7))
+       ->count();
+
+   // Active Vehicles
+   $activeVehicles = Vehicle::where('vehicle_status', 'active')->count();
+
+   // Income of Last Week (Only Completed Payments)
+   $incomeLastWeek = Payment::where('status', 'completed')
+       ->where('created_at', '>=', now()->subDays(7))
+       ->sum('amount');
+
+   // Order Flow of Last Week (Bookings with Completed Payments Only)
+   $orderFlowLastWeek = Booking::where('payment_status', 'completed')
+       ->where('created_at', '>=', now()->subDays(7))
+       ->count();
+
+   // New Vehicles List (Last 7 Days)
+   $newVehicles = Vehicle::where('created_at', '>=', now()->subDays(7))->latest()->get();
+
+   // Last 10 Orders (With Completed Payments)
+   $last10Orders = Booking::where('payment_status', 'completed')
+       ->latest()
+       ->take(10)
+       ->get();
+
+   // Return Data as JSON
+   return response()->json([
+       'new_trips_last_7_days' => $newTripsLast7Days,
+       'active_vehicles' => $activeVehicles,
+       'income_last_week' => $incomeLastWeek,
+       'order_flow_last_week' => $orderFlowLastWeek,
+       'new_vehicles' => $newVehicles,
+       'last_10_orders' => $last10Orders,
+   ]);
      }
 
 
