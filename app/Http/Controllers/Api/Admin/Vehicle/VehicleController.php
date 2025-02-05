@@ -28,7 +28,7 @@ class VehicleController extends Controller
         $defaultWaitingTime = $request->input('waiting_time', 0); // Default to 0 minutes if not provided
 
         // Base query
-        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min','extra_features');
+        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','surcharge_percentage_hourly','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min','extra_features');
 
         // Apply search filters if provided
         if ($numberOfPassengers) {
@@ -216,6 +216,7 @@ class VehicleController extends Controller
         $validatedVehicle = $request->validate([
             'hourly_rate' => 'nullable|numeric',
             'minimum_hour' => 'nullable|integer',
+            'surcharge_percentage_hourly' => 'nullable|integer',
             'base_fare_price' => 'nullable|numeric',
             'rate_per_mile' => 'nullable|numeric',
             'rate_per_minute' => 'nullable|numeric',

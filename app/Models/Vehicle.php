@@ -27,6 +27,7 @@ class Vehicle extends Model
 
         'hourly_rate',
         'minimum_hour',
+        'surcharge_percentage_hourly',
         'base_fare_price', // Updated field name
         'rate_per_mile',
         'rate_per_minute',
@@ -78,27 +79,20 @@ class Vehicle extends Model
 
         switch ($tripType) {
             case 'Hourly':
-                // Convert total minutes to hours and apply minimum hour rule
-                // $hours = max(ceil($totalMinutes / 60), $minimumHour);
-                // $totalPrice = $hourlyRate * $hours;
-
-
-
-                // $totalHours = $totalMinutes / 60;
-                // $totalPrice = $hourlyRate * $totalHours;
-
-
-
                 $totalHours = $totalMinutes / 60; // Convert minutes to hours
 
                 if ($totalHours <= $minimumHour) {
-                    $totalPrice = $hourlyRate * $minimumHour; // Charge for at least 2 hours
+                    $totalPrice = $hourlyRate * $minimumHour;
                 } else {
-                    $totalPrice = $hourlyRate * $totalHours; // Charge for the exact hours
+                    $totalPrice = $hourlyRate * $totalHours;
                 }
 
+                // Apply hourly surcharge
+                $hourlySurcharge = $totalPrice * ($this->surcharge_percentage_hourly / 100);
+                $totalPrice += $hourlySurcharge;
 
                 break;
+
 
             case 'Pay Per Ride':
 
