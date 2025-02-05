@@ -234,7 +234,21 @@ class VehicleController extends Controller
             'extra_pricings.*.value' => 'required_with:extra_pricings|numeric|min:0',
         ]);
 
-        // Process each extra pricing entry
+        // Get existing extra pricing records for the vehicle
+        $existingExtraPricingNames = $vehicle->extraPricings()->pluck('name')->toArray();
+
+        // Extract new extra pricing names from the request
+        $newExtraPricingNames = array_column($validatedExtraPricing['extra_pricings'] ?? [], 'name');
+
+        // Identify extra pricings to delete (those that exist in DB but not in the request)
+        $extraPricingsToDelete = array_diff($existingExtraPricingNames, $newExtraPricingNames);
+
+        // Delete removed extra pricing records
+        VehicleExtraPricing::where('vehicle_id', $vehicle->id)
+            ->whereIn('name', $extraPricingsToDelete)
+            ->delete();
+
+        // Process each extra pricing entry (update or create)
         if (!empty($validatedExtraPricing['extra_pricings'])) {
             foreach ($validatedExtraPricing['extra_pricings'] as $extraPricingData) {
                 VehicleExtraPricing::updateOrCreate(
@@ -257,10 +271,11 @@ class VehicleController extends Controller
             'message' => 'Pricing details updated successfully',
             'data' => [
                 'vehicle' => $vehicle,
-                'extra_pricings' => $vehicle->extraPricings, // Now returns extra pricing details
+                'extra_pricings' => $vehicle->extraPricings,
             ],
         ]);
     }
+
 
 
 }
