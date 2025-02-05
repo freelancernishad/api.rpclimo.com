@@ -110,18 +110,54 @@ class Vehicle extends Model
                 // Log::info("surcharge $surcharge");
                 $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge;
                 // Log::info("totalPrice $totalPrice");
-
-
                 break;
 
             case 'Round Trip':
-                // Round trip doubles distance and time costs
-                $distanceCost = ($totalDistance * $ratePerMile) * 2;
-                $timeCost = ($totalMinutes * $ratePerMinute) * 2;
-                $baseFare *= 2; // Double the base fare
-                $waitingCost = $waitingTime * $waitingChargePerMin;
+
+                // Calculate distance and time cost
+                $distanceCost = $totalDistance * $ratePerMile;
+                $timeCost = $totalMinutes * $ratePerMinute;
+
+                // Calculate surcharge
                 $surcharge = ($baseFare + $distanceCost + $timeCost) * ($surchargePercentage / 100);
-                $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge + $waitingCost;
+
+                // Calculate base total price
+                $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge;
+
+                // Round before applying round-trip multiplier
+                $totalPrice = round($totalPrice, 2);
+
+                // Calculate waiting cost
+                $waitingCost = $waitingTime * $waitingChargePerMin;
+                // Log::info("waitingTime: $waitingTime");
+                // Log::info("waitingChargePerMin: $waitingChargePerMin");
+                // Log::info("waitingCost: $waitingCost");
+                // Log::info("totalPrice: $totalPrice");
+
+                // Apply round-trip multiplier, then add waiting cost
+                $totalPrice = ($totalPrice * 2) + $waitingCost;
+
+                // Final rounding to ensure consistency
+                $totalPrice = round($totalPrice, 2);
+
+                // Log::info("Final Estimated Price: $totalPrice");
+
+
+
+
+
+
+
+                // Round trip doubles distance and time costs
+                // $distanceCost = ($totalDistance * $ratePerMile) * 2;
+                // $timeCost = ($totalMinutes * $ratePerMinute) * 2;
+                // $baseFare *= 2; // Double the base fare
+                // $waitingCost = $waitingTime * $waitingChargePerMin;
+                // Log::info("waitingTime $waitingTime");
+                // Log::info("waitingChargePerMin $waitingChargePerMin");
+                // Log::info("waitingCost $waitingCost");
+                // $surcharge = ($baseFare + $distanceCost + $timeCost) * ($surchargePercentage / 100);
+                // $totalPrice = $baseFare + $distanceCost + $timeCost + $surcharge + $waitingCost;
                 break;
 
             default:

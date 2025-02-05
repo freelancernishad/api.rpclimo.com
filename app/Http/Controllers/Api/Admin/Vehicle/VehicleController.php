@@ -124,19 +124,19 @@ class VehicleController extends Controller
         $vehicle = Vehicle::findOrFail($id);
 
         $validated = $request->validate([
-            'vehicle_name' => 'sometimes|string',
-            'license_no' => 'sometimes|string',
-            'vehicle_status' => 'sometimes|string',
-            'vehicle_model' => 'sometimes|string',
-            'number_of_passengers' => 'sometimes|integer',
-            'number_of_baggage' => 'sometimes|integer',
-            'price' => 'sometimes|numeric',
-            'color' => 'sometimes|string',
-            'power' => 'sometimes|string',
-            'fuel_type' => 'sometimes|string',
-            'length' => 'sometimes|string',
-            'transmission' => 'sometimes|string',
-            'extra_features' => 'sometimes|array',
+            'vehicle_name' => 'nullable|string',
+            'license_no' => 'nullable|string',
+            'vehicle_status' => 'nullable|string',
+            'vehicle_model' => 'nullable|string',
+            'number_of_passengers' => 'nullable|integer',
+            'number_of_baggage' => 'nullable|integer',
+            'price' => 'nullable|numeric',
+            'color' => 'nullable|string',
+            'power' => 'nullable|string',
+            'fuel_type' => 'nullable|string',
+            'length' => 'nullable|string',
+            'transmission' => 'nullable|string',
+            'extra_features' => 'nullable|array',
         ]);
 
         $vehicle->update($validated);
