@@ -23,7 +23,7 @@ class BookingController extends Controller
             'pickup_date' => 'required|date',
             'pickup_time' => 'required',
             'pickup_location' => 'required|string',
-            'drop_location' => 'required|string',
+            'drop_location' => 'nullable|string',
             'trip_type' => 'required|in:Hourly,Pay Per Ride,Round Trip',
             'waiting_time' => 'nullable|integer|min:0', // Waiting time in minutes
             'full_name' => 'required|string',
@@ -34,7 +34,7 @@ class BookingController extends Controller
             'number_of_passengers_booked' => 'required|integer',
             'number_of_kids' => 'nullable|integer',
             'total_distance' => 'required|numeric|min:0',
-            'total_duration' => 'required|integer|min:0',
+            'total_duration' => 'required|numeric|min:0',
             'success_url' => 'nullable|url',
             'cancel_url' => 'nullable|url',
         ]);
