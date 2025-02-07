@@ -11,18 +11,18 @@ class CreateQuoteRequestsTable extends Migration
         Schema::create('quote_requests', function (Blueprint $table) {
             $table->id();
             // Customer Fields
-            $table->string('passenger_name'); // Passenger Name
-            $table->string('phone'); // Phone
-            $table->string('email'); // Email
-            $table->string('service_type'); // Service Type
-            $table->date('pick_up_date'); // Pick-up Date
-            $table->time('pick_up_time'); // Pick-up Time
-            $table->string('pick_up_location'); // Pick-up Location
+            $table->string('passenger_name')->nullable(); // Passenger Name
+            $table->string('phone')->nullable(); // Phone
+            $table->string('email')->nullable(); // Email
+            $table->string('service_type')->nullable(); // Service Type
+            $table->date('pick_up_date')->nullable(); // Pick-up Date
+            $table->time('pick_up_time')->nullable(); // Pick-up Time
+            $table->string('pick_up_location')->nullable(); // Pick-up Location
             $table->date('drop_off_date')->nullable(); // Drop-off Date (optional)
             $table->time('drop_off_time')->nullable(); // Drop-off Time (optional)
-            $table->string('drop_off_location'); // Drop-off Location
-            $table->unsignedInteger('passengers'); // Passengers (number of passengers, unsigned integer)
-            $table->string('vehicle'); // Vehicle
+            $table->string('drop_off_location')->nullable(); // Drop-off Location
+            $table->unsignedInteger('passengers')->nullable(); // Passengers (number of passengers, unsigned integer)
+            $table->string('vehicle')->nullable(); // Vehicle
             $table->text('notes')->nullable(); // Notes (optional)
             $table->boolean('agree_to_email')->default(false); // Agree to Email (checkbox)
 

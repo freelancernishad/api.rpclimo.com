@@ -28,7 +28,7 @@ class VehicleController extends Controller
         $defaultWaitingTime = $request->input('waiting_time', 0); // Default to 0 minutes if not provided
 
         // Base query
-        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min','extra_features');
+        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','surcharge_percentage_hourly','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min','extra_features');
 
         // Apply search filters if provided
         if ($numberOfPassengers) {
@@ -115,7 +115,7 @@ class VehicleController extends Controller
 
     public function show($id)
     {
-        $vehicle = Vehicle::with('images')->findOrFail($id);
+        $vehicle = Vehicle::with('images','extraPricings')->findOrFail($id);
         return response()->json($vehicle);
     }
 
@@ -124,19 +124,19 @@ class VehicleController extends Controller
         $vehicle = Vehicle::findOrFail($id);
 
         $validated = $request->validate([
-            'vehicle_name' => 'sometimes|string',
-            'license_no' => 'sometimes|string',
-            'vehicle_status' => 'sometimes|string',
-            'vehicle_model' => 'sometimes|string',
-            'number_of_passengers' => 'sometimes|integer',
-            'number_of_baggage' => 'sometimes|integer',
-            'price' => 'sometimes|numeric',
-            'color' => 'sometimes|string',
-            'power' => 'sometimes|string',
-            'fuel_type' => 'sometimes|string',
-            'length' => 'sometimes|string',
-            'transmission' => 'sometimes|string',
-            'extra_features' => 'sometimes|array',
+            'vehicle_name' => 'nullable|string',
+            'license_no' => 'nullable|string',
+            'vehicle_status' => 'nullable|string',
+            'vehicle_model' => 'nullable|string',
+            'number_of_passengers' => 'nullable|integer',
+            'number_of_baggage' => 'nullable|integer',
+            'price' => 'nullable|numeric',
+            'color' => 'nullable|string',
+            'power' => 'nullable|string',
+            'fuel_type' => 'nullable|string',
+            'length' => 'nullable|string',
+            'transmission' => 'nullable|string',
+            'extra_features' => 'nullable|array',
         ]);
 
         $vehicle->update($validated);
@@ -216,6 +216,7 @@ class VehicleController extends Controller
         $validatedVehicle = $request->validate([
             'hourly_rate' => 'nullable|numeric',
             'minimum_hour' => 'nullable|integer',
+            'surcharge_percentage_hourly' => 'nullable|integer',
             'base_fare_price' => 'nullable|numeric',
             'rate_per_mile' => 'nullable|numeric',
             'rate_per_minute' => 'nullable|numeric',
@@ -234,7 +235,21 @@ class VehicleController extends Controller
             'extra_pricings.*.value' => 'required_with:extra_pricings|numeric|min:0',
         ]);
 
-        // Process each extra pricing entry
+        // Get existing extra pricing records for the vehicle
+        $existingExtraPricingNames = $vehicle->extraPricings()->pluck('name')->toArray();
+
+        // Extract new extra pricing names from the request
+        $newExtraPricingNames = array_column($validatedExtraPricing['extra_pricings'] ?? [], 'name');
+
+        // Identify extra pricings to delete (those that exist in DB but not in the request)
+        $extraPricingsToDelete = array_diff($existingExtraPricingNames, $newExtraPricingNames);
+
+        // Delete removed extra pricing records
+        VehicleExtraPricing::where('vehicle_id', $vehicle->id)
+            ->whereIn('name', $extraPricingsToDelete)
+            ->delete();
+
+        // Process each extra pricing entry (update or create)
         if (!empty($validatedExtraPricing['extra_pricings'])) {
             foreach ($validatedExtraPricing['extra_pricings'] as $extraPricingData) {
                 VehicleExtraPricing::updateOrCreate(
@@ -257,10 +272,11 @@ class VehicleController extends Controller
             'message' => 'Pricing details updated successfully',
             'data' => [
                 'vehicle' => $vehicle,
-                'extra_pricings' => $vehicle->extraPricings, // Now returns extra pricing details
+                'extra_pricings' => $vehicle->extraPricings,
             ],
         ]);
     }
+
 
 
 }
