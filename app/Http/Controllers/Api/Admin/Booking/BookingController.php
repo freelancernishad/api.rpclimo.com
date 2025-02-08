@@ -13,47 +13,69 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        // Number of items per page (default: 10)
-        $perPage = $request->input('per_page', 10);
-
-        // Global search input
-        $search = $request->input('search');
-
-        // Base query with required columns
         $query = Booking::select([
-                'id',
-                'booking_reference',
-                'full_name',
-                'phone_no',
-                'pickup_date',
-                'pickup_time',
-                'number_of_passengers',
-                'number_of_baggage',
-                'pickup_location',
-                'drop_location',
-                'status',
-                'total_amount',
-                'payment_status'
-            ])
-            ->where('payment_status', 'completed');
+            'id',
+            'booking_reference',
+            'full_name',
+            'phone_no',
+            'pickup_date',
+            'pickup_time',
+            'number_of_passengers',
+            'number_of_baggage',
+            'pickup_location',
+            'drop_location',
+            'status',
+            'total_amount',
+            'payment_status',
+            'vehicle_name',
+            'vehicle_model',
+            'license_no'
+        ])->where('payment_status', 'completed');
 
-        // Apply global search filter if provided
-        if (!empty($search)) {
+        // Global Search
+        if ($request->has('search')) {
+            $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'LIKE', "%$search%")
-                  ->orWhere('phone_no', 'LIKE', "%$search%")
-                  ->orWhere('pickup_date', 'LIKE', "%$search%")
-                  ->orWhere('pickup_time', 'LIKE', "%$search%")
-                  ->orWhere('number_of_passengers', 'LIKE', "%$search%")
-                  ->orWhere('number_of_baggage', 'LIKE', "%$search%");
+                $q->where('full_name', 'LIKE', "%{$search}%")
+                    ->orWhere('phone_no', 'LIKE', "%{$search}%")
+                    ->orWhere('pickup_date', 'LIKE', "%{$search}%")
+                    ->orWhere('pickup_time', 'LIKE', "%{$search}%")
+                    ->orWhere('number_of_passengers', 'LIKE', "%{$search}%")
+                    ->orWhere('number_of_baggage', 'LIKE', "%{$search}%")
+                    ->orWhere('vehicle_name', 'LIKE', "%{$search}%")
+                    ->orWhere('vehicle_model', 'LIKE', "%{$search}%")
+                    ->orWhere('license_no', 'LIKE', "%{$search}%");
             });
         }
 
-        // Order by latest and paginate results
-        $bookings = $query->orderBy('id', 'desc')->paginate($perPage);
+        // Date Filters
+        if ($request->has('filter')) {
+            $filter = $request->input('filter');
+
+            if ($filter == 'today') {
+                $query->whereDate('pickup_date', today());
+            } elseif ($filter == 'last_7_days') {
+                $query->whereDate('pickup_date', '>=', now()->subDays(7));
+            } elseif ($filter == 'last_month') {
+                $query->whereMonth('pickup_date', now()->subMonth()->month);
+            }
+        }
+
+        // Payment Status Filter (Paid/Unpaid)
+        if ($request->has('payment_status')) {
+            if ($request->input('payment_status') === 'paid') {
+                $query->where('payment_status', 'completed');
+            } elseif ($request->input('payment_status') === 'unpaid') {
+                $query->where('payment_status', '!=', 'completed');
+            }
+        }
+
+        $bookings = $query->orderBy('id', 'desc')
+            ->paginate($request->input('per_page', 10)); // Default to 10 per page
 
         return response()->json($bookings);
     }
+
 
 
     /**
