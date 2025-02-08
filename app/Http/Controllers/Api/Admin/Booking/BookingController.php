@@ -13,7 +13,14 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        $bookings = Booking::select([
+        // Number of items per page (default: 10)
+        $perPage = $request->input('per_page', 10);
+
+        // Global search input
+        $search = $request->input('search');
+
+        // Base query with required columns
+        $query = Booking::select([
                 'id',
                 'booking_reference',
                 'full_name',
@@ -28,12 +35,26 @@ class BookingController extends Controller
                 'total_amount',
                 'payment_status'
             ])
-            ->where(['payment_status'=>'completed'])
-            ->orderBy('id', 'desc')
-            ->paginate($request->input('per_page', 10)); // Default 10 per page
+            ->where('payment_status', 'completed');
+
+        // Apply global search filter if provided
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'LIKE', "%$search%")
+                  ->orWhere('phone_no', 'LIKE', "%$search%")
+                  ->orWhere('pickup_date', 'LIKE', "%$search%")
+                  ->orWhere('pickup_time', 'LIKE', "%$search%")
+                  ->orWhere('number_of_passengers', 'LIKE', "%$search%")
+                  ->orWhere('number_of_baggage', 'LIKE', "%$search%");
+            });
+        }
+
+        // Order by latest and paginate results
+        $bookings = $query->orderBy('id', 'desc')->paginate($perPage);
 
         return response()->json($bookings);
     }
+
 
     /**
      * Get a single booking with full details.
