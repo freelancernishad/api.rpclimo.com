@@ -17,38 +17,42 @@ class VehicleController extends Controller
         // Number of items per page (default: 10)
         $perPage = $request->input('per_page', 10);
 
-        // Search parameters
-        $numberOfPassengers = $request->input('number_of_passengers');
-        $numberOfBaggage = $request->input('number_of_baggage');
+        // Global search input
+        $search = $request->input('search');
 
         // Trip parameters from the request (with default values if not provided)
-        $defaultTripType = $request->input('trip_type', 'Hourly'); // Default to 'Hourly' if not provided
-        $defaultDistance = $request->input('distance', 10); // Default to 10 miles if not provided
-        $defaultDuration = $request->input('duration', 60); // Default to 60 minutes if not provided
-        $defaultWaitingTime = $request->input('waiting_time', 0); // Default to 0 minutes if not provided
+        $defaultTripType = $request->input('trip_type', 'Hourly');
+        $defaultDistance = $request->input('distance', 10);
+        $defaultDuration = $request->input('duration', 60);
+        $defaultWaitingTime = $request->input('waiting_time', 0);
 
-        // Base query
-        $query = Vehicle::with('images')->select('id', 'vehicle_name', 'vehicle_model', 'license_no', 'number_of_passengers', 'number_of_baggage','hourly_rate','minimum_hour','surcharge_percentage_hourly','rate_per_mile','rate_per_minute','base_fare_price','surcharge_percentage','waiting_charge_per_min','extra_features');
+        // Base query with vehicle relationships
+        $query = Vehicle::with('images')->select(
+            'id', 'vehicle_name', 'vehicle_model', 'license_no',
+            'number_of_passengers', 'number_of_baggage', 'hourly_rate', 'minimum_hour',
+            'surcharge_percentage_hourly', 'rate_per_mile', 'rate_per_minute',
+            'base_fare_price', 'surcharge_percentage', 'waiting_charge_per_min', 'extra_features'
+        );
 
-        // Apply search filters if provided
-        if ($numberOfPassengers) {
-            $query->where('number_of_passengers', '>=', $numberOfPassengers);
+        // Apply global search filter if provided
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('vehicle_name', 'LIKE', "%$search%")
+                  ->orWhere('license_no', 'LIKE', "%$search%")
+                  ->orWhere('vehicle_model', 'LIKE', "%$search%")
+                  ->orWhere('number_of_passengers', 'LIKE', "%$search%")
+                  ->orWhere('number_of_baggage', 'LIKE', "%$search%");
+            });
         }
-        if ($numberOfBaggage) {
-            $query->where('number_of_baggage', '>=', $numberOfBaggage);
-        }
 
-        // Order by latest items and paginate
-        $vehicles = $query->orderBy('created_at', 'desc')
-                          ->paginate($perPage);
+        // Order by latest and paginate results
+        $vehicles = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         Log::info($request->all());
 
-        // Transform the collection to include the first image and calculated price
+        // Transform the collection to add image and estimated price
         $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
-            // Add the first image to the vehicle object
             $vehicle->image = $vehicle->first_image; // Assuming `first_image` is an accessor in the Vehicle model
-            // Calculate the estimated price for the provided or default trip parameters
             $vehicle->estimated_price = $vehicle->calculateTripPrice(
                 $defaultTripType,
                 $defaultDistance,
@@ -60,7 +64,7 @@ class VehicleController extends Controller
             return $vehicle;
         });
 
-        // Return the paginated results
+        // Return JSON response
         return response()->json($vehicles);
     }
 
