@@ -53,13 +53,14 @@ class BookingController extends Controller
             $filter = $request->input('filter');
 
             if ($filter == 'today') {
-                $query->whereDate('pickup_date', today());
+                $query->whereDate('created_at', today());
             } elseif ($filter == 'last_7_days') {
-                $query->whereDate('pickup_date', '>=', now()->subDays(7));
+                $query->whereDate('created_at', '>=', now()->subDays(7));
             } elseif ($filter == 'last_month') {
-                $query->whereMonth('pickup_date', now()->subMonth()->month);
+                $query->whereMonth('created_at', now()->subMonth()->month);
             }
         }
+
 
         // Payment Status Filter (Paid/Unpaid)
         if ($request->has('payment_status')) {
