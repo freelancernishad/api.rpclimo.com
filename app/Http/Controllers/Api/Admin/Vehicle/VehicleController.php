@@ -17,6 +17,11 @@ class VehicleController extends Controller
         // Number of items per page (default: 10)
         $perPage = $request->input('per_page', 10);
 
+
+         // Search parameters
+         $numberOfPassengers = $request->input('number_of_passengers');
+         $numberOfBaggage = $request->input('number_of_baggage');
+
         // Global search input
         $search = $request->input('search');
 
@@ -33,6 +38,16 @@ class VehicleController extends Controller
             'surcharge_percentage_hourly', 'rate_per_mile', 'rate_per_minute',
             'base_fare_price', 'surcharge_percentage', 'waiting_charge_per_min', 'extra_features'
         );
+
+
+
+        // Apply search filters if provided
+        if ($numberOfPassengers) {
+            $query->where('number_of_passengers', '>=', $numberOfPassengers);
+        }
+        if ($numberOfBaggage) {
+            $query->where('number_of_baggage', '>=', $numberOfBaggage);
+        }
 
         // Apply global search filter if provided
         if (!empty($search)) {
