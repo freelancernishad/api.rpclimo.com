@@ -75,8 +75,8 @@ class SliderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:jpg,jpeg,png,webp,mp4,mov,avi|max:10240', // Added webp support
+            'title' => 'nullable|string|max:255',
+            'file' => 'nullable|file|mimes:jpg,jpeg,png,webp,mp4,mov,avi|max:10240', // Added webp support
         ]);
 
         if ($validator->fails()) {

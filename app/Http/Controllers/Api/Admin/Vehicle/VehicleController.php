@@ -142,7 +142,7 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
 
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'vehicle_name' => 'nullable|string',
             'license_no' => 'nullable|string',
             'vehicle_status' => 'nullable|string',
@@ -158,9 +158,16 @@ class VehicleController extends Controller
             'extra_features' => 'nullable|array',
         ]);
 
-        $vehicle->update($validated);
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // Use validated data
+        $vehicle->update($validator->validated());
+
         return response()->json($vehicle);
     }
+
 
     public function destroy($id)
     {
@@ -174,12 +181,18 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
 
-        $request->validate([
+
+        $validator = Validator::make($request->all(), [
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'deleted_ids' => 'nullable|array',
             'deleted_ids.*' => 'exists:vehicle_images,id',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
 
         // Delete existing images if any IDs are provided
         if ($request->has('deleted_ids')) {
@@ -231,8 +244,8 @@ class VehicleController extends Controller
         // Find the vehicle by ID
         $vehicle = Vehicle::findOrFail($id);
 
-        // Validate base pricing fields
-        $validatedVehicle = $request->validate([
+        // Validate main pricing fields
+        $validator = Validator::make($request->all(), [
             'hourly_rate' => 'nullable|numeric',
             'minimum_hour' => 'nullable|integer',
             'surcharge_percentage_hourly' => 'nullable|integer',
@@ -243,16 +256,26 @@ class VehicleController extends Controller
             'waiting_charge_per_min' => 'nullable|numeric',
         ]);
 
-        // Update base pricing in the `vehicles` table
-        $vehicle->update($validatedVehicle);
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
 
-        // Validate extra pricing fields
-        $validatedExtraPricing = $request->validate([
+        // Update base pricing in the `vehicles` table
+        $vehicle->update($validator->validated());
+
+        // Validate extra pricing fields using Validator
+        $extraPricingValidator = Validator::make($request->all(), [
             'extra_pricings' => 'nullable|array',
             'extra_pricings.*.name' => 'required_with:extra_pricings|string',
             'extra_pricings.*.type' => 'required_with:extra_pricings|in:percentage,fixed',
             'extra_pricings.*.value' => 'required_with:extra_pricings|numeric|min:0',
         ]);
+
+        if ($extraPricingValidator->fails()) {
+            return response()->json(['status' => false, 'errors' => $extraPricingValidator->errors()], 422);
+        }
+
+        $validatedExtraPricing = $extraPricingValidator->validated();
 
         // Get existing extra pricing records for the vehicle
         $existingExtraPricingNames = $vehicle->extraPricings()->pluck('name')->toArray();
@@ -295,6 +318,7 @@ class VehicleController extends Controller
             ],
         ]);
     }
+
 
 
 

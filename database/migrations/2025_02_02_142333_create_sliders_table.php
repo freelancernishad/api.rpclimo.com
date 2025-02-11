@@ -9,9 +9,9 @@ return new class extends Migration {
     {
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->enum('type', ['image', 'video']); // Defines type as either image or video
-            $table->string('file'); // Stores the file path (image or video)
+            $table->string('title')->nullable();
+            $table->enum('type', ['image', 'video'])->nullable(); // Defines type as either image or video
+            $table->string('file')->nullable(); // Stores the file path (image or video)
             $table->timestamps();
         });
     }
