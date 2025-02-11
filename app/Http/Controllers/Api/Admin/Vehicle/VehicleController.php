@@ -247,8 +247,8 @@ class VehicleController extends Controller
         // Validate main pricing fields
         $validator = Validator::make($request->all(), [
             'hourly_rate' => 'nullable|numeric',
-            'minimum_hour' => 'nullable|integer',
-            'surcharge_percentage_hourly' => 'nullable|integer',
+            'minimum_hour' => 'nullable|numeric',
+            'surcharge_percentage_hourly' => 'nullable|numeric',
             'base_fare_price' => 'nullable|numeric',
             'rate_per_mile' => 'nullable|numeric',
             'rate_per_minute' => 'nullable|numeric',
