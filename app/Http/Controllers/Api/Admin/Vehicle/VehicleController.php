@@ -8,10 +8,14 @@ use Illuminate\Http\Request;
 use App\Models\VehicleExtraPricing;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class VehicleController extends Controller
 {
+
+
+
     public function index(Request $request)
     {
         // Number of items per page (default: 10)
@@ -20,6 +24,7 @@ class VehicleController extends Controller
         // Search parameters
         $numberOfPassengers = $request->input('number_of_passengers');
         $numberOfBaggage = $request->input('number_of_baggage');
+        $vehicle_status = $request->input('vehicle_status');
 
         // Global search input
         $search = $request->input('search');
@@ -42,8 +47,14 @@ class VehicleController extends Controller
         if ($numberOfPassengers) {
             $query->where('number_of_passengers', '>=', $numberOfPassengers);
         }
+        
         if ($numberOfBaggage) {
             $query->where('number_of_baggage', '>=', $numberOfBaggage);
+        }
+
+
+        if ($vehicle_status) {
+            $query->where('vehicle_status', '=', $vehicle_status);
         }
 
         // Apply global search filter if provided
@@ -60,7 +71,10 @@ class VehicleController extends Controller
         // Order by latest and paginate results
         $vehicles = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-        // Transform the collection and filter out vehicles with estimated_price = 0
+        // Check if the authenticated user is an admin using the admin guard
+        $isAdmin = Auth::guard('admin')->check();
+
+        // Transform the collection and filter only if the user is NOT an admin
         $filteredVehicles = $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
             $vehicle->image = $vehicle->first_image; // Assuming first_image is an accessor in the Vehicle model
             $vehicle->estimated_price = $vehicle->calculateTripPrice(
@@ -69,11 +83,15 @@ class VehicleController extends Controller
                 $defaultDuration,
                 $defaultWaitingTime
             );
-
             return $vehicle;
-        })->filter(function ($vehicle) {
-            return $vehicle->estimated_price > 0;
         });
+
+        // If the user is NOT an admin, filter out vehicles with estimated_price == 0
+        if (!$isAdmin) {
+            $filteredVehicles = $filteredVehicles->filter(function ($vehicle) {
+                return $vehicle->estimated_price > 0;
+            });
+        }
 
         // Manually re-paginate the filtered collection
         $filteredVehicles = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -87,6 +105,8 @@ class VehicleController extends Controller
         // Return JSON response
         return response()->json($filteredVehicles);
     }
+
+
 
 
 
