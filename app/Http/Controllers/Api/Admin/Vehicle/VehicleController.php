@@ -37,7 +37,7 @@ class VehicleController extends Controller
 
         // Base query with vehicle relationships
         $query = Vehicle::with('images')->select(
-            'id', 'vehicle_name', 'vehicle_model', 'license_no',
+            'id', 'vehicle_name', 'vehicle_model', 'license_no', 'vehicle_status',
             'number_of_passengers', 'number_of_baggage', 'hourly_rate', 'minimum_hour',
             'surcharge_percentage_hourly', 'rate_per_mile', 'rate_per_minute',
             'base_fare_price', 'surcharge_percentage', 'waiting_charge_per_min', 'extra_features'
