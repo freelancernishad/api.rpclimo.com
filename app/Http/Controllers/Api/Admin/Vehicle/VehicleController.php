@@ -17,10 +17,9 @@ class VehicleController extends Controller
         // Number of items per page (default: 10)
         $perPage = $request->input('per_page', 10);
 
-
-         // Search parameters
-         $numberOfPassengers = $request->input('number_of_passengers');
-         $numberOfBaggage = $request->input('number_of_baggage');
+        // Search parameters
+        $numberOfPassengers = $request->input('number_of_passengers');
+        $numberOfBaggage = $request->input('number_of_baggage');
 
         // Global search input
         $search = $request->input('search');
@@ -38,8 +37,6 @@ class VehicleController extends Controller
             'surcharge_percentage_hourly', 'rate_per_mile', 'rate_per_minute',
             'base_fare_price', 'surcharge_percentage', 'waiting_charge_per_min', 'extra_features'
         );
-
-
 
         // Apply search filters if provided
         if ($numberOfPassengers) {
@@ -63,25 +60,34 @@ class VehicleController extends Controller
         // Order by latest and paginate results
         $vehicles = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-        Log::info($request->all());
-
-        // Transform the collection to add image and estimated price
-        $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
-            $vehicle->image = $vehicle->first_image; // Assuming `first_image` is an accessor in the Vehicle model
+        // Transform the collection and filter out vehicles with estimated_price = 0
+        $filteredVehicles = $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
+            $vehicle->image = $vehicle->first_image; // Assuming first_image is an accessor in the Vehicle model
             $vehicle->estimated_price = $vehicle->calculateTripPrice(
                 $defaultTripType,
                 $defaultDistance,
                 $defaultDuration,
                 $defaultWaitingTime
             );
-            Log::info("estimated_price : $vehicle->estimated_price");
 
             return $vehicle;
+        })->filter(function ($vehicle) {
+            return $vehicle->estimated_price > 0;
         });
 
+        // Manually re-paginate the filtered collection
+        $filteredVehicles = new \Illuminate\Pagination\LengthAwarePaginator(
+            $filteredVehicles->values(), // Reset keys
+            $filteredVehicles->count(),
+            $perPage,
+            \Illuminate\Pagination\Paginator::resolveCurrentPage(),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
         // Return JSON response
-        return response()->json($vehicles);
+        return response()->json($filteredVehicles);
     }
+
 
 
     public function store(Request $request)
