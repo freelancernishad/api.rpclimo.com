@@ -4,6 +4,7 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/freelancernishad/api.rpclimo.com.git'
         BRANCH = 'main' // Replace with your branch name if different
+        DEPLOY_DIR = '/var/www/html' // Set the path where you want to deploy the app
     }
 
     stages {
@@ -16,27 +17,44 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                // Install dependencies for the project (Node.js example)
+                // Install Composer and dependencies for the Laravel project
                 sh 'sudo apt update'
-                sh 'sudo apt install -y npm'
-                sh 'npm install'
+                sh 'sudo apt install -y php-cli php-mbstring unzip curl php-xml php-zip php-curl php-mysql'
+                sh 'curl -sS https://getcomposer.org/installer | php'
+                sh 'sudo mv composer.phar /usr/local/bin/composer'
+                sh 'composer install --no-interaction --prefer-dist'
             }
         }
 
-        stage('Build') {
+        stage('Setup Environment') {
             steps {
-                // Build the project if applicable (e.g., npm build, etc.)
-                sh 'npm run build'
+                // Copy the environment file and set permissions
+                sh 'cp .env.example .env'
+                sh 'php artisan key:generate'
+                sh 'sudo chown -R www-data:www-data storage bootstrap/cache' // Set the correct permissions for Laravel
+            }
+        }
+
+        stage('Run Migrations') {
+            steps {
+                // Run database migrations
+                sh 'php artisan migrate --force' // Use --force to run migrations in production
             }
         }
 
         stage('Deploy') {
             steps {
-                // Deploy the application to the server
-                // You can use a script to copy files to the server or deploy via PM2 for Node.js
-                sh 'sudo cp -r * /var/www/html/' // Example for Apache
-                // If you're using PM2 for Node.js
-                // sh 'pm2 start server.js'
+                // Copy files to the deployment directory
+                sh 'sudo cp -r * ${DEPLOY_DIR}/'
+
+                // Set the correct ownership of the deployed files
+                sh 'sudo chown -R www-data:www-data ${DEPLOY_DIR}/'
+
+                // Clear Laravel cache and optimize the application
+                sh 'php artisan config:cache'
+                sh 'php artisan route:cache'
+                sh 'php artisan view:cache'
+                sh 'php artisan optimize'
             }
         }
     }
