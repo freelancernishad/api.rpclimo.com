@@ -47,7 +47,7 @@ class VehicleController extends Controller
         if ($numberOfPassengers) {
             $query->where('number_of_passengers', '>=', $numberOfPassengers);
         }
-        
+
         if ($numberOfBaggage) {
             $query->where('number_of_baggage', '>=', $numberOfBaggage);
         }
@@ -91,6 +91,18 @@ class VehicleController extends Controller
             $filteredVehicles = $filteredVehicles->filter(function ($vehicle) {
                 return $vehicle->estimated_price > 0;
             });
+
+
+            // Apply priority sorting based on closest match to passengers and baggage
+            if ($numberOfPassengers || $numberOfBaggage) {
+                $filteredVehicles = $filteredVehicles->sortBy(function ($vehicle) use ($numberOfPassengers, $numberOfBaggage) {
+                    $passengerDiff = isset($numberOfPassengers) ? abs($vehicle->number_of_passengers - $numberOfPassengers) : 0;
+                    $baggageDiff = isset($numberOfBaggage) ? abs($vehicle->number_of_baggage - $numberOfBaggage) : 0;
+
+                    return $passengerDiff + $baggageDiff; // Lower sum means higher priority
+                })->values(); // Reset collection keys
+            }
+
         }
 
         // Manually re-paginate the filtered collection
