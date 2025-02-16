@@ -2,16 +2,17 @@ pipeline {
     agent any
 
     environment {
-        REPO_URL = 'https://github.com/freelancernishad/api.rpclimo.com.git'
-        BRANCH = 'main' // Replace with your branch name if different
-        DEPLOY_DIR = '/var/www/html' // Set the path where you want to deploy the app
+        REPO_URL = 'https://github.com/freelancernishad/api.rpclimo.com.git'  // Replace with your actual repository URL
+        BRANCH = 'main'  // Replace with your branch name if different
+        GIT_CREDENTIALS_ID = 'c2fdc78d-4805-475a-974b-c7445d7cb002'  // Your GitHub credentials ID
+        DEPLOY_DIR = '/var/www/html'  // Set the path where you want to deploy the app
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the code from the Git repository
-                git branch: "${BRANCH}", url: "${REPO_URL}"
+                // Checkout the code from the Git repository using the credentials
+                git branch: "${BRANCH}", url: "${REPO_URL}", credentialsId: "${GIT_CREDENTIALS_ID}"
             }
         }
 
@@ -31,14 +32,14 @@ pipeline {
                 // Copy the environment file and set permissions
                 sh 'cp .env.example .env'
                 sh 'php artisan key:generate'
-                sh 'sudo chown -R www-data:www-data storage bootstrap/cache' // Set the correct permissions for Laravel
+                sh 'sudo chown -R www-data:www-data storage bootstrap/cache'  // Set the correct permissions for Laravel
             }
         }
 
         stage('Run Migrations') {
             steps {
                 // Run database migrations
-                sh 'php artisan migrate --force' // Use --force to run migrations in production
+                sh 'php artisan migrate --force'  // Use --force to run migrations in production
             }
         }
 
