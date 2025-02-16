@@ -14,7 +14,6 @@ pipeline {
                 git branch: "${BRANCH}", url: "${REPO_URL}", credentialsId: "${GIT_CREDENTIALS_ID}"
             }
         }
-
         stage('Install Dependencies') {
             steps {
                 // Install Composer dependencies for the Laravel project
