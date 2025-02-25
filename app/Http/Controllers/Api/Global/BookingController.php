@@ -106,7 +106,7 @@ class BookingController extends Controller
 
             // Create the Stripe session with the updated unit_amount
             $session = Session::create([
-                'payment_method_types' => ['card'],
+                'payment_method_types' => ['card', 'amazon_pay', 'us_bank_account'],
                 'line_items' => [
                     [
                         'price_data' => [

@@ -365,7 +365,7 @@ class StripeController extends Controller
             $paymentIntent = PaymentIntent::create([
                 'amount' => $validatedData['amount'] * 100, // Amount in cents
                 'currency' => $validatedData['currency'],
-                'payment_method_types' => ['card'],
+                'payment_method_types' => ['card', 'amazon_pay', 'us_bank_account'],
             ]);
 
             // Respond with the client secret for the frontend to use
