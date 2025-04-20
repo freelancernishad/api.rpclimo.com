@@ -41,6 +41,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/system-setting', [SystemSettingController::class, 'storeOrUpdate']);
         Route::get('/allowed-origins', [AllowedOriginController::class, 'index']);
         Route::post('/allowed-origins', [AllowedOriginController::class, 'store']);
+        Route::post('/allowed-origins', [AllowedOriginController::class, 'store']);
         Route::put('/allowed-origins/{id}', [AllowedOriginController::class, 'update']);
         Route::delete('/allowed-origins/{id}', [AllowedOriginController::class, 'destroy']);
 

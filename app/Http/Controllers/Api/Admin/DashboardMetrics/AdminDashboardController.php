@@ -119,43 +119,60 @@ class AdminDashboardController extends Controller
 
      public function dashboardMatrics()
      {
-       // New Trips (Bookings) in the Last 7 Days (Completed Payments Only)
-       $newTripsLast7Days = Booking::where('payment_status', 'completed')
-       ->where('created_at', '>=', now()->subDays(7))
-       ->count();
+         // New Trips (Bookings) in the Last 7 Days (Completed Payments Only)
+         $newTripsLast7Days = Booking::where('payment_status', 'completed')
+             ->where('created_at', '>=', now()->subDays(7))
+             ->count();
 
-   // Active Vehicles
-   $activeVehicles = Vehicle::where('vehicle_status', 'active')->count();
+         // Active Vehicles
+         $activeVehicles = Vehicle::where('vehicle_status', 'active')->count();
 
-   // Income of Last Week (Only Completed Payments)
-   $incomeLastWeek = Payment::where('status', 'completed')
-       ->where('created_at', '>=', now()->subDays(7))
-       ->sum('amount');
+         // Income of Last Week (Only Completed Payments)
+         $incomeLastWeek = Payment::where('status', 'completed')
+             ->where('created_at', '>=', now()->subDays(7))
+             ->sum('amount');
 
-   // Order Flow of Last Week (Bookings with Completed Payments Only)
-   $orderFlowLastWeek = Booking::where('payment_status', 'completed')
-       ->where('created_at', '>=', now()->subDays(7))
-       ->count();
+         // Order Flow of Last Week (Bookings with Completed Payments Only)
+         $orderFlowLastWeek = Booking::where('payment_status', 'completed')
+             ->where('created_at', '>=', now()->subDays(7))
+             ->count();
 
-   // New Vehicles List (Last 7 Days)
-   $newVehicles = Vehicle::where('created_at', '>=', now()->subDays(7))->latest()->get();
+         // New Vehicles List (Last 7 Days)
+         $newVehicles = Vehicle::where('created_at', '>=', now()->subDays(7))->latest()->get();
 
-   // Last 10 Orders (With Completed Payments)
-   $last10Orders = Booking::where('payment_status', 'completed')
-       ->latest()
-       ->take(10)
-       ->get();
+         // Last 10 Orders (With Completed Payments)
+         $last10Orders = Booking::where('payment_status', 'completed')
+             ->latest()
+             ->take(10)
+             ->get();
 
-   // Return Data as JSON
-   return response()->json([
-       'new_trips_last_7_days' => $newTripsLast7Days,
-       'active_vehicles' => $activeVehicles,
-       'income_last_week' => $incomeLastWeek,
-       'order_flow_last_week' => $orderFlowLastWeek,
-       'new_vehicles' => $newVehicles,
-       'last_10_orders' => $last10Orders,
-   ]);
+         // Orders Flow - Monthly Completed Orders (Jan to Dec)
+         $ordersFlow = Booking::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+             ->where('payment_status', 'completed')
+             ->whereYear('created_at', now()->year)
+             ->groupBy('month')
+             ->orderBy('month')
+             ->pluck('count', 'month')
+             ->toArray();
+
+         // Make sure we have 12 months, even if 0
+         $ordersFlowFormatted = [];
+         for ($i = 1; $i <= 12; $i++) {
+             $ordersFlowFormatted[] = $ordersFlow[$i] ?? 0;
+         }
+
+         // Return Data as JSON
+         return response()->json([
+             'new_trips_last_7_days' => $newTripsLast7Days,
+             'active_vehicles' => $activeVehicles,
+             'income_last_week' => $incomeLastWeek,
+             'order_flow_last_week' => $orderFlowLastWeek,
+             'new_vehicles' => $newVehicles,
+             'last_10_orders' => $last10Orders,
+             'orders_flow' => $ordersFlowFormatted,
+         ]);
      }
+
 
 
 }
