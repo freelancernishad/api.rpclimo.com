@@ -138,7 +138,11 @@ class AdminDashboardController extends Controller
              ->count();
 
          // New Vehicles List (Last 7 Days)
-         $newVehicles = Vehicle::where('created_at', '>=', now()->subDays(7))->latest()->get();
+        //  $newVehicles = Vehicle::where('created_at', '>=', now()->subDays(7))->latest()->get();
+        $newVehicles = Vehicle::latest()
+        ->take(10)
+        ->get();
+
 
          // Last 10 Orders (With Completed Payments)
          $last10Orders = Booking::where('payment_status', 'completed')
