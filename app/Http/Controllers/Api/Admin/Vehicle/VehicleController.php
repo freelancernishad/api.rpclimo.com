@@ -20,18 +20,18 @@ class VehicleController extends Controller
     {
         // Number of items per page (default: 10)
         $perPage = $request->input('per_page', 10);
-    
+
         // Search parameters
         $numberOfPassengers = $request->input('number_of_passengers');
         $vehicle_status = $request->input('vehicle_status');
         $search = $request->input('search');
-    
+
         // Trip parameters from the request (with default values if not provided)
         $defaultTripType = $request->input('trip_type', 'Hourly');
         $defaultDistance = $request->input('distance', 10);
         $defaultDuration = $request->input('duration', 60);
         $defaultWaitingTime = $request->input('waiting_time', 0);
-    
+
         // Base query with vehicle relationships
         $query = Vehicle::with('images')->select(
             'id', 'vehicle_name', 'vehicle_model', 'license_no', 'vehicle_status',
@@ -39,16 +39,16 @@ class VehicleController extends Controller
             'surcharge_percentage_hourly', 'rate_per_mile', 'rate_per_minute',
             'base_fare_price', 'surcharge_percentage', 'waiting_charge_per_min', 'extra_features'
         );
-    
+
         // Apply search filters if provided
         if ($numberOfPassengers) {
             $query->where('number_of_passengers', '>=', $numberOfPassengers);
         }
-    
+
         if ($vehicle_status) {
             $query->where('vehicle_status', '=', $vehicle_status);
         }
-    
+
         // Apply global search filter if provided
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
@@ -58,13 +58,13 @@ class VehicleController extends Controller
                   ->orWhere('number_of_passengers', 'LIKE', "%$search%");
             });
         }
-    
+
         // Order by latest and paginate results
         $vehicles = $query->orderBy('created_at', 'desc')->paginate($perPage);
-    
+
         // Check if the authenticated user is an admin using the admin guard
         $isAdmin = Auth::guard('admin')->check();
-    
+
         // Transform the collection and filter only if the user is NOT an admin
         $filteredVehicles = $vehicles->getCollection()->transform(function ($vehicle) use ($defaultTripType, $defaultDistance, $defaultDuration, $defaultWaitingTime) {
             $vehicle->image = $vehicle->first_image; // Assuming first_image is an accessor in the Vehicle model
@@ -76,21 +76,24 @@ class VehicleController extends Controller
             );
             return $vehicle;
         });
-    
+
         // If the user is NOT an admin, filter out vehicles with estimated_price == 0
         if (!$isAdmin) {
-            $filteredVehicles = $filteredVehicles->filter(function ($vehicle) {
-                return $vehicle->estimated_price > 0;
-            });
-    
-            // Apply priority sorting based only on number_of_passengers
+            // Sort vehicles: lowest estimated_price first, but keep 0-priced vehicles at the end
+            $filteredVehicles = $filteredVehicles->sortBy(function ($vehicle) {
+                return $vehicle->estimated_price == 0 ? INF : $vehicle->estimated_price;
+            })->values(); // Reset collection keys
+
+            // Optional: Secondary sorting by closeness to number_of_passengers
             if ($numberOfPassengers) {
                 $filteredVehicles = $filteredVehicles->sortBy(function ($vehicle) use ($numberOfPassengers) {
-                    return abs($vehicle->number_of_passengers - $numberOfPassengers); // Lower difference is better
-                })->values(); // Reset collection keys
+                    return $vehicle->estimated_price == 0
+                        ? INF * 2 // Keep at bottom
+                        : abs($vehicle->number_of_passengers - $numberOfPassengers);
+                })->values();
             }
         }
-    
+
         // Manually re-paginate the filtered collection
         $filteredVehicles = new \Illuminate\Pagination\LengthAwarePaginator(
             $filteredVehicles->values(), // Reset keys
@@ -99,11 +102,11 @@ class VehicleController extends Controller
             \Illuminate\Pagination\Paginator::resolveCurrentPage(),
             ['path' => request()->url(), 'query' => request()->query()]
         );
-    
+
         // Return JSON response
         return response()->json($filteredVehicles);
     }
-    
+
 
 
 
